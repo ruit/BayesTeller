@@ -1,4 +1,4 @@
-BayesTeller
-===========
+3_VCF_Annotation
+================
 
-A probabilistic model based tool for molecular diagnosis of cancer based on concurrent SNVs
+Since Nov. 2013
