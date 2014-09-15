@@ -12,8 +12,68 @@ cancer=$1
 #the path of folder where you have *vcf.gz
 folder=$2
 
+# Tian R. <tianremi@gmail.com>
+# Sep 12, 2014
 
-FilterSNV(){
+
+#for Broad Institute VCF files, but I assume can be used in more general terms
+
+FilterSNVbyMoreParas(){
+
+#filter by quality, by length, by 1 to N, by germline and somatic
+	
+	filefolder=$1
+	cancer=$2
+	
+	#base quality
+	bq=30
+	
+	#ratio of alt reads
+	fa=0.05
+	
+	#seq depth
+	dp=7
+	
+	
+	for vcf in `ls $filefolder | grep vcf.gz`
+	do
+
+		
+		#10 is normal
+		#11 is tumor
+		
+		echo $vcf
+		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)!=substr($11, 1, 3)) print $0}' > $vcf".somatic.temp"
+		
+		cat $vcf".somatic.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp '{split($11, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".somatic"
+		# look at col 11
+		cat $vcf".somatic" | cut -f1,2 | sort | uniq > $vcf".somatic.coord"
+		
+
+		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)==substr($11, 1, 3)) print $0}' > $vcf".germline.temp" 
+		# look at col 10
+		cat $vcf".germline.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp '{split($10, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".germline"
+		cat $vcf".germline" | cut -f1,2 | sort | uniq > $vcf".germline.coord"
+		
+		
+		cat $vcf".somatic" $vcf".germline" | cut -f1,2 | sort | uniq > $vcf".tumor.coord"
+
+		rm $vcf".germline.temp"
+		rm $vcf".somatic.temp"
+	done
+
+#	cat *.somatic.coord | sort -k1,1 -n -k2,2 -n > $cancer".somatic.stacked.sorted"
+#	cat *.germline.coord | sort -k1,1 -n -k2,2 -n >$cancer".germline.stacked.sorted" 
+
+#	cat *.tumor.coord | sort -k1,1 -n -k2,2 -n >$cancer".tumor.stacked.sorted"
+
+	}
+
+
+
+
+
+FilterSNVbyPASS(){
 
 #filter by quality, by length, by 1 to N, by germline and somatic
 	
@@ -127,7 +187,8 @@ echo "Current time : $startTime"
 mkdir $cancer"_run"
 
 echo "#INFO: filtering out low quatity SNVs from VCF files."
-FilterSNV $folder $cancer 
+
+FilterSNVbyMoreParas $folder $cancer 
 
 mv *.coord $cancer"_run"
 
@@ -138,34 +199,46 @@ echo "#INFO: Labeling patients for germline."
 LabelPatients $cancer"_run/" "germline" "all"$cancer"Cancergermline"
 
 echo "#INFO: counting SNV block mutational frequencies for tumor."
-python SNVBlockFreqTCGA.py "all"$cancer"Cancertumor" 500
+python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancertumor" 500
 
 echo "#INFO: counting SNV block mutational frequencies for germline."
-python SNVBlockFreqTCGA.py "all"$cancer"Cancergermline" 500
+python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancergermline" 500
 
+#Tian R. <tianremi@gmail.com>
+#Sep. 15, 2014 
 
+#germline tumor 
+#somatic SNV assign 0 in germline
 Summary(){
-	cat "all"$cancer"Cancertumor.snvfreq" "all"$cancer"Cancergermline.snvfreq" | cut -f1 | sort | uniq -c | awk '{if($1==1) print $2"\t0"}' >$cancer".somatic.snvfreq"
+	cancer=$1
+	tumorfile=$2
+	germfile=$3
 
-	cat "all"$cancer"Cancergermline.snvfreq" $cancer".somatic.snvfreq" | sort > temp1
-	cat "all"$cancer"Cancertumor.snvfreq" | sort > temp2
-	cut -f1 temp1 > temp1.cut1
-	cut -f1 temp2 > temp2.cut1
+	cat $tumorfile $germfile | cut -f1 | sort | uniq -c | awk '{if($1==1) print $2"\t0"}' >$cancer".somatic.snvfreq"
+
+	cat $germfile $cancer".somatic.snvfreq" | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n > temp1
+	cat $tumorfile | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n > temp2
+	cut -f1,2 temp1 > temp1.cut1
+	cut -f1,2 temp2 > temp2.cut1
+
 
 	res=`diff temp1.cut1 temp2.cut1`
 	if [ $? -eq 0 ]
 	then
 		
-		echo "1st cols are the same."
-		echo "#SNVblock	Nnormal	Ntumor" > $cancer".summary"
-		cat temp1 temp2 | cut -f1-2,4	>>$cancer".summary"
+		echo "1st cols of the two files are the same."
+		echo "#chr	pos	Nnormal	Ntumor" > $cancer".summary"
+		paste temp1 temp2 | cut -f1-3,6	>>$cancer".summary"
 	else
 		echo "Different!"
 	fi 
 
-	#rm temp1*
-	#rm temp2*
+	rm temp1*
+	rm temp2*
+	rm *.somatic.snvfreq
 }
+
+#Summary luad allluadCancertumor.snvfreq.cn allluadCancergermline.snvfreq.cn
 
 rm *out1
 rm *out2
