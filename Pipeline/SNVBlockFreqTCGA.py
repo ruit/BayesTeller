@@ -199,9 +199,10 @@ def CountNonRedundantPatients(infile, outfile):
 	10_100010909	Patient78,Patient119
 	10_100010921	Patient119,Patient78
 	10_100011442	Patient12
+	somewhere	void (for somatic SNV in germline counting)
 	'''
 
-	
+	#Sep 15, 2014	
 
 	patlist=[]
 	f_out=open(outfile, "w")
@@ -210,8 +211,16 @@ def CountNonRedundantPatients(infile, outfile):
 		chrpos, patients=line.strip("\n").split("\t")
 
 		patlist=patients.split(",")
+
+		# patlist might contain "void" (empty) elements
+	
+		newlist=[]
+		for e in patlist:	
+			if e != "void":
+				newlist.append(e)	
+			
+		f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
 		
-		f_out.write(chrpos+"\t"+str(len(unique1(patlist)))+"\n")
 	
 	f_out.close()
 
@@ -226,7 +235,7 @@ def main():
 		outfile1=infile+"_"+str(rd.random())+".out1"
 	
 		print "@INFO Inputfile is "+infile
-		print "@INFO Inputfile should be sorted sequentially by 1st and 2rd columns(numerically)!"
+		print "@INFO Inputfile should be sorted sequentially by 1st and 2rd columns(numerically)."
 	
 		testSorted=subprocess.call('cat '+infile+' |sed "s/_/\t/g" |sort -c -k1,1 -k2,2 -n ', shell=True)
 

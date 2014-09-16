@@ -5,12 +5,19 @@
 # Aug. 21, 2014 Paper, Paper, Paper is everything!!!
 #
 # Sep 5, 2014, run time 20min for colon cancer
+
+# Sep 15, 2014, Major bugs found in the germline SNVfreq !!!!!!!!!!
+# germline SNV block should encompass somatic SNVs!!!
+
 #---------------------------------------------------------
 #the name of cancer type
 cancer=$1
 
 #the path of folder where you have *vcf.gz
 folder=$2
+
+#how to filter low quality SNVs
+filter=$3
 
 # Tian R. <tianremi@gmail.com>
 # Sep 12, 2014
@@ -181,14 +188,21 @@ startTime=$(date +"%T")
 echo "Current time : $startTime"
 
 #cancer="colon"
-
-
 #folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
 mkdir $cancer"_run"
 
-echo "#INFO: filtering out low quatity SNVs from VCF files."
+echo "#INFO: Filtering low quality SNVs from raw vcf files..."
 
-FilterSNVbyMoreParas $folder $cancer 
+
+if [ $filter=="PASS" ]
+then
+	echo "Filter by PASS"
+	FilterSNVbyPASS $folder $cancer
+else
+	echo "Filter by more parameters"
+	FilterSNVbyMoreParas $folder $cancer 
+fi
+
 
 mv *.coord $cancer"_run"
 
@@ -197,6 +211,19 @@ LabelPatients $cancer"_run/" "tumor" "all"$cancer"Cancertumor"
 
 echo "#INFO: Labeling patients for germline."
 LabelPatients $cancer"_run/" "germline" "all"$cancer"Cancergermline"
+
+cat "all"$cancer"Cancertumor" | grep -v \< | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancertumor2"
+rm "all"$cancer"Cancertumor"
+mv "all"$cancer"Cancertumor2" "all"$cancer"Cancertumor"
+
+cat "all"$cancer"Cancertumor" | cut -f1 | sort | uniq > tumorSNV 
+cat "all"$cancer"Cancergermline" | cut -f1 | sort | uniq > germSNV
+cat tumorSNV germSNV | sort | uniq -u | awk '{print $1 "\tvoid"}' > somatic
+#remove weird <M>, etc.
+cat "all"$cancer"Cancergermline" somatic | grep -v \< | sed "s/_/\t/g" |sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancergermline2"
+
+rm tumorSNV germSNV  somatic "all"$cancer"Cancergermline"
+mv "all"$cancer"Cancergermline2" "all"$cancer"Cancergermline"
 
 echo "#INFO: counting SNV block mutational frequencies for tumor."
 python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancertumor" 500
@@ -210,6 +237,9 @@ python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cance
 #germline tumor 
 #somatic SNV assign 0 in germline
 Summary(){
+
+	#This should be only valid for single SNV, not for SNV blocks!!!!!
+	
 	cancer=$1
 	tumorfile=$2
 	germfile=$3
@@ -247,5 +277,5 @@ rm -r $cancer"_run"
 
 startTime=$(date +"%T")
 echo "Current time : $startTime"
-echo"#_____________________________________________"
+echo "#_____________________________________________"
 
