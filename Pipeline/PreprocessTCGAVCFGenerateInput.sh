@@ -192,18 +192,22 @@ echo "Current time : $startTime"
 mkdir $cancer"_run"
 
 echo "#INFO: Filtering low quality SNVs from raw vcf files..."
+echo "#INFO: Filter option is "$filter
 
 
-if [ $filter=="PASS" ]
-then
-	echo "Filter by PASS"
+#####space space space!!!!!
+
+if [ "$filter" == "PASS" ];then
+	echo "@Filter by PASS"
 	FilterSNVbyPASS $folder $cancer
-else
-	echo "Filter by more parameters"
-	FilterSNVbyMoreParas $folder $cancer 
+elif [ "$filter" == "other" ];then	
+	echo "@Filter by more parameters"
+	FilterSNVbyMoreParas $folder $cancer
 fi
 
 
+
+Run(){
 mv *.coord $cancer"_run"
 
 echo "#INFO: Labeling patients for tumor."
@@ -230,6 +234,10 @@ python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cance
 
 echo "#INFO: counting SNV block mutational frequencies for germline."
 python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancergermline" 500
+
+}
+
+Run
 
 #Tian R. <tianremi@gmail.com>
 #Sep. 15, 2014 
