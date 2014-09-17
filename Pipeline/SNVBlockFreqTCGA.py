@@ -225,9 +225,51 @@ def CountNonRedundantPatients(infile, outfile):
 	f_out.close()
 
 
+
+def CountNonRedundantPatientsTestRemoved(infile, outfile, testpatientList):
+	'''
+	input file should be something like this:
+	1st and 2rd is delimited by tab; then within 2rd column, each patient is seperated by comma
+	------------------------------------------
+	10_100008701	Patient216
+	10_100010909	Patient78,Patient119
+	10_100010921	Patient119,Patient78
+	10_100011442	Patient12
+	somewhere	void (for somatic SNV in germline counting)
+	#
+	#Sep 17, 2014
+	#exclude a list of patients ["Patient1", "Patient2"]
+	#excluded patients are to be used as the test data
+
+	'''
+
+	#Sep 15, 2014	
+
+	patlist=[]
+	f_out=open(outfile, "w")
+
+	for line in open(infile, "r"):
+		chrpos, patients=line.strip("\n").split("\t")
+
+		patlist=patients.split(",")
+
+		# patlist might contain "void" (empty) elements
+	
+		newlist=[]
+		for e in patlist:	
+			if e != "void" and e not in testpatientList:
+				newlist.append(e)	
+			
+		f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
+		
+	
+	f_out.close()
+
+
+
 def main():
 
-	if len(sys.argv)==3:
+	if len(sys.argv)==4:
 
 		start=time.time()
 
@@ -249,11 +291,41 @@ def main():
 			print "@INFO For a given SNV block, number of unique patients are counted."
 			print "@INFO The output is "+sys.argv[1]+".snvfreq"
 
-			CountNonRedundantPatients (infile=outfile1+".out2", outfile=sys.argv[1]+".snvfreq")
-			end=time.time()
+
+			if int(sys.argv[3]) >0 and int(sys.argv[3]) <=99:
+
+				r=int(sys.argv[3])
+				# remove this proportion of patients randomly from both germ and tumor, so that use them for testing the model later
+				# Sep 17, 2014
+				temppatfile=sys.argv[1]+"_"+str(rd.random())+".temp"
+				subprocess.call('cat '+ sys.argv[1]+' | cut -f2 | sort | uniq | grep -v "void" > temppatfile')
+				
+				testpatlist=[]
+				for line in open("temppatfile", "r"):
+					line=line.strip("\n")
+					testpatlist.append(line)
+				
+				#shuffle the list of patients				
+				newlist=random.shuffle(testpatlist)	
+				
+				outlist=[]
+				for e in newlist:
+					if newlist.index(e)<=len(newlist)*r*0.01-1:
+						outlist.append(e)
+				# take the first r% as the set of patients for testing	
+
+				CountNonRedundantPatientsTestRemoved (infile=outfile1+".out2", outfile=sys.argv[1]+".snvfreq", testpatientList=outlist )
+				
 	
-			print 'Cong! Total time elapsed: '+str((end-start)/60)+" min." 
-			print
+			elif sys.argv[3] == "0":
+				print "Use all the patients to build the model"		
+				CountNonRedundantPatients (infile=outfile1+".out2", outfile=sys.argv[1]+".snvfreq")
+				end=time.time()
+	
+				print 'Cong! Total time elapsed: '+str((end-start)/60)+" min." 
+				print
+			else:
+				print "WARNING! The 3rd parameter shoud be within 0-100 integers!"
 			#subprocess.call('rm *.out1')
 			#subprocess.call('rm *.out2')
 		else:
@@ -262,10 +334,10 @@ def main():
 
 	else:
 		print
-		print sys.argv[0]+" needs 2 arguments:"
+		print sys.argv[0]+" needs 3 arguments:"
 		print "ARGV[1], input file: a sorted catenated all tumor OR germline SNVs."
 		print "ARGV[2], left and right span length in bps, default value is 500."
-		print
+		print "ARGV[3], proportion of patients to be excluded from building the model"
 
 
 if __name__=="__main__":
