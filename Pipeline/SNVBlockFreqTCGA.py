@@ -14,7 +14,7 @@
 
 import sys, re, subprocess
 import random as rd
-import time
+import time, math
 
 # merger col2 sharing the same col1 values
 # Aug 26, 2014 # 300K!!!!!!!!!!
@@ -268,8 +268,8 @@ def CountNonRedundantPatientsTestRemoved(infile, outfile, testpatientList):
 
 
 def main():
-
-	if len(sys.argv)==4:
+	import random as rd
+	if len(sys.argv)==5:
 
 		start=time.time()
 
@@ -277,6 +277,7 @@ def main():
 		outfile1=infile+"_"+str(rd.random())+".out1"
 	
 		print "@INFO Inputfile is "+infile
+		print "@INFO Consider left and right each "+sys.argv[2]+" bps."
 		print "@INFO Inputfile should be sorted sequentially by 1st and 2rd columns(numerically)."
 	
 		testSorted=subprocess.call('cat '+infile+' |sed "s/_/\t/g" |sort -c -k1,1 -k2,2 -n ', shell=True)
@@ -289,7 +290,7 @@ def main():
 			AllPatientsSortedSNVs2Blocks (infile=outfile1, span=int(sys.argv[2]), outfile=outfile1+".out2")
 
 			print "@INFO For a given SNV block, number of unique patients are counted."
-			print "@INFO The output is "+sys.argv[1]+".snvfreq"
+			#print "@INFO The output is "+sys.argv[1]+".snvfreq"
 
 
 			if int(sys.argv[3]) >0 and int(sys.argv[3]) <=99:
@@ -298,47 +299,60 @@ def main():
 				# remove this proportion of patients randomly from both germ and tumor, so that use them for testing the model later
 				# Sep 17, 2014
 				temppatfile=sys.argv[1]+"_"+str(rd.random())+".temp"
-				subprocess.call('cat '+ sys.argv[1]+' | cut -f2 | sort | uniq | grep -v "void" > temppatfile')
+				subprocess.call('cat '+ sys.argv[1]+' | cut -f2 | sort | uniq | grep -v void > temppatfile', shell=True)
 				
-				testpatlist=[]
-				for line in open("temppatfile", "r"):
-					line=line.strip("\n")
-					testpatlist.append(line)
+				# repeat this for N times
+				N=int(sys.argv[4])
+				if N<= 0:
+					print "WARNING! Repition times should be bigger than 0."
+				else:
+					print "@INFO Repeat "+sys.argv[4]+" times for modelling"
+					testpatlist=[]
+					for line in open("temppatfile", "r"):
+						line=line.strip("\n")
+						testpatlist.append(line)
 				
-				#shuffle the list of patients				
-				newlist=random.shuffle(testpatlist)	
-				
-				outlist=[]
-				for e in newlist:
-					if newlist.index(e)<=len(newlist)*r*0.01-1:
-						outlist.append(e)
-				# take the first r% as the set of patients for testing	
+					#print testpatlist
 
-				CountNonRedundantPatientsTestRemoved (infile=outfile1+".out2", outfile=sys.argv[1]+".snvfreq", testpatientList=outlist )
+					for ii in range(N):
+						# sample the list of patients				
+						outlist=rd.sample(testpatlist, math.trunc(len(testpatlist)*r*0.01))	
+					
+						CountNonRedundantPatientsTestRemoved (infile=outfile1+".out2", outfile=sys.argv[1]+"_"+str(ii)+".snvfreq", testpatientList=outlist )
+						# print list of patients for testing
+						print "@INFO output1 is "+sys.argv[1]+"_"+str(ii)+".snvfreq"
+						
+						
+						outputtestpatfile=sys.argv[1]+"_"+str(ii)+".testPID"
+						f_out=open(outputtestpatfile, "w")	
+						
+						for k in sorted(outlist):
+							f_out.write(k+"\n")	
+						
+						f_out.close()
+						print "@INFO output2 is "+sys.argv[1]+"_"+str(ii)+".testPID"
 				
-	
+		
 			elif sys.argv[3] == "0":
-				print "Use all the patients to build the model"		
+				print "@INFO Use all the patients to build the model"		
 				CountNonRedundantPatients (infile=outfile1+".out2", outfile=sys.argv[1]+".snvfreq")
 				end=time.time()
 	
 				print 'Cong! Total time elapsed: '+str((end-start)/60)+" min." 
 				print
 			else:
-				print "WARNING! The 3rd parameter shoud be within 0-100 integers!"
-			#subprocess.call('rm *.out1')
-			#subprocess.call('rm *.out2')
+				print "WARNING! The 3rd parameter shoud be within 0-99 integers!"
 		else:
 			print "@ERROR The input file should be sorted in Linux first!"
 			pass
 
 	else:
 		print
-		print sys.argv[0]+" needs 3 arguments:"
+		print sys.argv[0]+" needs 4 arguments:"
 		print "ARGV[1], input file: a sorted catenated all tumor OR germline SNVs."
 		print "ARGV[2], left and right span length in bps, default value is 500."
-		print "ARGV[3], proportion of patients to be excluded from building the model"
-
+		print "ARGV[3], proportion of patients to be excluded from building the model."
+		print "ARGV[4], repetition times for cross validation."
 
 if __name__=="__main__":
 	main()
