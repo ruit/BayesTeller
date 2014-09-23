@@ -213,13 +213,16 @@ def CountNonRedundantPatients(infile, outfile):
 		patlist=patients.split(",")
 
 		# patlist might contain "void" (empty) elements
-	
 		newlist=[]
-		for e in patlist:	
-			if e != "void":
-				newlist.append(e)	
-			
-		f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
+	
+		if "comVar" in patlist:
+			break
+	
+		elif "comVar" not in patlist:
+			for e in patlist:
+				if e != "void" and e != "comVar":
+					newlist.append(e) 
+			f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
 		
 	
 	f_out.close()
@@ -256,14 +259,49 @@ def CountNonRedundantPatientsTestRemoved(infile, outfile, testpatientList):
 		# patlist might contain "void" (empty) elements
 	
 		newlist=[]
-		for e in patlist:	
-			if e != "void" and e not in testpatientList:
-				newlist.append(e)	
-			
-		f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
+		# common variants should not be countd or printed
+		# Sep 23, 2014		
+		
+		if "comVar" in patlist:
+			break
+		elif "comVar" not in patlist:
+			for e in patlist:
+				if e != "void" and e != "comVar" and e not in testpatientList:
+					newlist.append(e) 
+			f_out.write(chrpos+"\t"+str(len(unique1(newlist)))+"\n")
 		
 	
 	f_out.close()
+
+
+# Sep 19, 2014
+# Tian R. compare SNVs freq in normal and tumor, build a pridictive model
+# Sep 22, 2014. 1000G SNV freq <= 0.5% as the filtering at the beginning!!!
+
+def TrainNBmodel(germdata, tumordata, commonVarcutoff):
+	'''
+	germdata and tumordata should be sorted, with the same set of patients removed from being counted.
+	commonVarcutoff is set so that common variants are not considered.
+	'''
+	
+	
+
+
+
+def GetVariantSetsbyPatients(germALLdata, tumorALLdata, PatientID):
+	'''
+	given all SNV data from the patients cohort, get the set of SNVs for a given patient ID.
+	'''
+
+
+
+def Predict(model, varSet):
+	'''
+	model is a list of conditional Probs. varSet is a set of variants that a sample has.
+	'''
+
+
+
 
 
 
@@ -273,6 +311,9 @@ def main():
 
 		start=time.time()
 
+		# to make sure that normal and tumor samples, for that same set of patients removed for modeling
+		# input the path to aggre normal and tumor data
+			
 		infile=sys.argv[1]
 		outfile1=infile+"_"+str(rd.random())+".out1"
 	
@@ -285,6 +326,12 @@ def main():
 		if testSorted==0:
 			#this file is sorted	
 			SortedKey2MultipleValuesAsList(infile, outfile1)
+
+			#Sep 23, 2014
+			print "@INFO filter out common variants from 1000 genomes."
+
+			subprocess.call('cat '+ outfile1+ ' |grep -v comVar > '+outfile1+'.filtered', shell=True)
+			subprocess.call('cp '+ outfile1+'.filtered '+outfile1, shell=True)
 		
 			print "@INFO For a given SNV block, patients show mutations are gathered."		
 			AllPatientsSortedSNVs2Blocks (infile=outfile1, span=int(sys.argv[2]), outfile=outfile1+".out2")

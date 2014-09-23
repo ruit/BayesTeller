@@ -8,7 +8,7 @@
 
 # Sep 15, 2014, Major bugs found in the germline SNVfreq !!!!!!!!!!
 # germline SNV block should encompass somatic SNVs!!!
-
+# Sep 23, 2014
 #---------------------------------------------------------
 #the name of cancer type
 cancer=$1
@@ -18,6 +18,10 @@ folder=$2
 
 #how to filter low quality SNVs
 filter=$3
+
+#SNV freq in 1000 Genomes
+kgenomeVar=$4
+#/home/tianr/1Projects/1SNVblocks/DATA/1kgenomes/1Kgenome.SNV.freq.purified
 
 # Tian R. <tianremi@gmail.com>
 # Sep 12, 2014
@@ -208,6 +212,12 @@ fi
 
 
 Run(){
+
+span=$1
+excludeR=$2
+repeat=$3
+
+
 mv *.coord $cancer"_run"
 
 echo "#INFO: Labeling patients for tumor."
@@ -216,7 +226,11 @@ LabelPatients $cancer"_run/" "tumor" "all"$cancer"Cancertumor"
 echo "#INFO: Labeling patients for germline."
 LabelPatients $cancer"_run/" "germline" "all"$cancer"Cancergermline"
 
-cat "all"$cancer"Cancertumor" | grep -v \< | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancertumor2"
+echo "#INFO: Lableing common variants from 1000 genomes"
+cat $kgenomeVar | awk '{print $1"_"$2"\tcomVar"}' > comSNV
+
+
+cat "all"$cancer"Cancertumor" comSNV| grep -v \< | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancertumor2"
 rm "all"$cancer"Cancertumor"
 mv "all"$cancer"Cancertumor2" "all"$cancer"Cancertumor"
 
@@ -224,20 +238,22 @@ cat "all"$cancer"Cancertumor" | cut -f1 | sort | uniq > tumorSNV
 cat "all"$cancer"Cancergermline" | cut -f1 | sort | uniq > germSNV
 cat tumorSNV germSNV | sort | uniq -u | awk '{print $1 "\tvoid"}' > somatic
 #remove weird <M>, etc.
-cat "all"$cancer"Cancergermline" somatic | grep -v \< | sed "s/_/\t/g" |sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancergermline2"
+cat "all"$cancer"Cancergermline" somatic comSNV | grep -v \< | sed "s/_/\t/g" |sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancergermline2"
 
 rm tumorSNV germSNV  somatic "all"$cancer"Cancergermline"
 mv "all"$cancer"Cancergermline2" "all"$cancer"Cancergermline"
 
 echo "#INFO: counting SNV block mutational frequencies for tumor."
-python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancertumor" 500
+python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancertumor" $span $excludeR $repeat
 
 echo "#INFO: counting SNV block mutational frequencies for germline."
-python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancergermline" 500
+python /home/tianr/1Projects/1SNVblocks/pipeline/SNVBlockFreqTCGA.py "all"$cancer"Cancergermline" $span $excludeR $repeat
+
+rm comSNV
 
 }
 
-Run
+Run 500 0 1
 
 #Tian R. <tianremi@gmail.com>
 #Sep. 15, 2014 
