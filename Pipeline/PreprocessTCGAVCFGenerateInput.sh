@@ -45,7 +45,8 @@ FilterSNVbyMoreParas(){
 	#seq depth
 	dp=7
 	
-	
+	mlen=2	
+
 	for vcf in `ls $filefolder | grep vcf.gz`
 	do
 
@@ -56,14 +57,16 @@ FilterSNVbyMoreParas(){
 		echo $vcf
 		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)!=substr($11, 1, 3)) print $0}' > $vcf".somatic.temp"
 		
-		cat $vcf".somatic.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp '{split($11, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".somatic"
+		cat $vcf".somatic.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($11, A, ":" ); \
+if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH ) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".somatic"
 		# look at col 11
 		cat $vcf".somatic" | cut -f1,2 | sort | uniq > $vcf".somatic.coord"
 		
 
 		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)==substr($11, 1, 3)) print $0}' > $vcf".germline.temp" 
 		# look at col 10
-		cat $vcf".germline.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp '{split($10, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".germline"
+		cat $vcf".germline.temp" | awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($10, A, ":" ); \
+if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $vcf".germline"
 		cat $vcf".germline" | cut -f1,2 | sort | uniq > $vcf".germline.coord"
 		
 		
@@ -90,16 +93,17 @@ FilterSNVbyPASS(){
 	
 	filefolder=$1
 	cancer=$2
+	mlen=2
 	
 	for vcf in `ls $filefolder | grep vcf.gz`
 	do
 
 		#echo $vcf
-		zcat $filefolder$vcf | grep -v "#" | awk '{if ($7=="PASS" && substr($10, 1, 3)!=substr($11, 1, 3)) print $1"\t"$2"\t"$4"\t"$5}' > $vcf".somatic"
+		zcat $filefolder$vcf | grep -v "#" | awk '{if ($7=="PASS" && substr($10, 1, 3)!=substr($11, 1, 3) && length($4) <= $mlen && length($5) <= $mlen) print $1"\t"$2"\t"$4"\t"$5}' > $vcf".somatic"
 		cat $vcf".somatic" | cut -f1,2 | sort | uniq > $vcf".somatic.coord"
 		
 
-		zcat $filefolder$vcf | grep -v "#" | awk '{if ($7=="PASS" && substr($10, 1, 3)==substr($11, 1, 3)) print $1"\t"$2"\t"$4"\t"$5}' > $vcf".germline" 
+		zcat $filefolder$vcf | grep -v "#" | awk '{if ($7=="PASS" && substr($10, 1, 3)==substr($11, 1, 3) && length($4) <= $mlen && length($5) <= $mlen) print $1"\t"$2"\t"$4"\t"$5}' > $vcf".germline" 
 		cat $vcf".germline" | cut -f1,2 | sort | uniq > $vcf".germline.coord"
 		
 		
@@ -253,7 +257,7 @@ rm comSNV
 
 }
 
-Run 500 0 1
+#Run 500 0 1
 
 #Tian R. <tianremi@gmail.com>
 #Sep. 15, 2014 
@@ -296,10 +300,12 @@ Summary(){
 
 rm *out1
 rm *out2
+rm *.filtered
+rm *vcf.gz.*
 rm -r $cancer"_run"
 #Summary
 
 startTime=$(date +"%T")
 echo "Current time : $startTime"
-echo "#_____________________________________________"
+echo "###################################################################"
 

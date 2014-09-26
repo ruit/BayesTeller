@@ -12,7 +12,7 @@ FilterCommonVar(){
 
 	
 	zcat -f $inputfile |cut -f1-8 | grep -v "#" | sed "s/;/\t/g"| awk '{for (i=1;i<=NF;i++){if(substr($i,1,3) == "AF=") print $1"\t"$2"\t"$4"\t"$5"\t"$i}}' \
-| sed "s/AF=//g" |awk -v CUTOFF=$cutoff '{if ($5 >= CUTOFF && $5 <= (1- CUTOFF) && length($3) <=2 && length($4) <=2) print $0}' > $output
+| sed "s/AF=//g" |awk -v CUTOFF=$cutoff '{if ($5 >= CUTOFF && length($3) <=2 && length($4) <=2) print $0}' > $output
 
 	}
 
