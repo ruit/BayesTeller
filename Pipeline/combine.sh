@@ -49,6 +49,7 @@ awk -v N=$total -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\t"$4"\
 
 	Rscript /home/tianr/1Projects/1SNVblocks/pipeline/bionorm.R $cancer".bloc"
 
+	rm $cancer".bloc"
 	#echo $cancer "has "$total" patients."
 
 done

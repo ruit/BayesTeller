@@ -14,6 +14,8 @@ pseudo=0.0005
 
 data<-read.table(args[1], header=F)
 
+oridata<-data
+
 data[data[,4]==0,4]<-pseudo
 	
 #compute the K-1 cumulative p
@@ -24,7 +26,7 @@ cumuP_Kminus1<-pbinom(
 #compute -log10 of P, x>=K
 CRscore<--log10(1-cumuP_Kminus1)
 
-outputdf<-data.frame(data, CRscore=CRscore)
+outputdf<-data.frame(oridata, CRscore=CRscore)
 
 write.table(outputdf, file=paste(args[1],".pval", sep=""), sep="\t", 
 quote=F, row.names=F, col.names=F)
