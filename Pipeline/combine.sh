@@ -45,8 +45,11 @@ do
 
 
 	paste "all"$cancer"Cancergermline.snvfreq" "all"$cancer"Cancertumor.snvfreq" | \
-awk -v N=$total -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\t"($2/N)"\t"($4/N)}'  | sort -k3 -n -r >$cancer".blocfreq"
-	echo $cancer "has "$total" patients."
+awk -v N=$total -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\t"$4"\t"N"\t"($2/N)}' >$cancer".bloc"
+
+	Rscript /home/tianr/1Projects/1SNVblocks/pipeline/bionorm.R $cancer".bloc"
+
+	#echo $cancer "has "$total" patients."
 
 done
 
