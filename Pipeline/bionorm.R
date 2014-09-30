@@ -21,10 +21,10 @@ data[data[,4]==0,4]<-pseudo
 #compute the K-1 cumulative p
 
 cumuP_Kminus1<-pbinom(
-(data[,2]-1), data[,3], data[,4])
+(data[,2]-1), data[,3], data[,4], log.p=T, lower.tail=F)
 
 #compute -log10 of P, x>=K
-CRscore<--log10(1-cumuP_Kminus1)
+CRscore<--1*(cumuP_Kminus1)
 
 outputdf<-data.frame(oridata, CRscore=CRscore)
 
