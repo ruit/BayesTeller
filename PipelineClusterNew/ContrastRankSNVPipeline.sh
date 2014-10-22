@@ -323,8 +323,8 @@ do
 awk -v N=$total -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\t"$4"\t"N"\t"($2/N)}' >$cancer".bloc"
 
 	Rscript /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/bionorm.R $cancer".bloc"
-
-	rm $cancer".bloc"
+	cat $cancer".bloc.pval" | sort -k5 -n -r > $cancer".bloc.Pval"
+	rm $cancer".bloc" $cancer".bloc.pval"
 	#echo $cancer "has "$total" patients."
 
 done

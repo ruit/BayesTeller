@@ -44,17 +44,20 @@ def SortedKey2GivenStartEndAsList(input, outfile):
 		
 		#start with "A_start", Oct 21, 2014		
 		if current_you=="A_start":
-			last_zuo=""
+			last_zuo="what"
 			last_you=current_you
 		
 		if last_you != "":
 			#if last_you is not empty
 			if current_you != "Z_end":
-				if last_zuo != "":
-					last_zuo=last_zuo+","+current_zuo
+				if last_zuo != "what":
+					if last_zuo=="":
+						last_zuo=current_zuo
+					else:
+						last_zuo=last_zuo+","+current_zuo
 					last_you=last_you+","+current_you
 				else:
-					last_zuo=last_zuo+current_zuo
+					last_zuo=""
 					last_you=last_you+","+current_you
 			else:
 	
