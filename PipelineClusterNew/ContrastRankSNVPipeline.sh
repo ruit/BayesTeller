@@ -189,7 +189,6 @@ cat "all"$cancer"Cancertumor" comSNV| grep -v \< | sed "s/_/\t/g" | sort -k1,1 -
 rm "all"$cancer"Cancertumor"
 mv "all"$cancer"Cancertumor2" "all"$cancer"Cancertumor"
 python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/listSortedPairs.py "all"$cancer"Cancertumor" | grep -v comVar >"all"$cancer"Cancertumor.filtered"
-rm "all"$cancer"Cancertumor"
 echo "#INFO: common variants have been filtered out from tumor variants."
 
 
@@ -202,7 +201,7 @@ cat "all"$cancer"Cancergermline" somatic comSNV | grep -v \< | sed "s/_/\t/g" |s
 rm tumorSNV germSNV  somatic "all"$cancer"Cancergermline"
 mv "all"$cancer"Cancergermline2" "all"$cancer"Cancergermline"
 python  /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/listSortedPairs.py "all"$cancer"Cancergermline" | grep -v comVar > "all"$cancer"Cancergermline.filtered"
-rm "all"$cancer"Cancergermline"
+rm "all"$cancer"Cancergermline" "all"$cancer"Cancertumor"
 echo "#INFO: common variants have been filtered out from germline variants."
 
 rm comSNV
@@ -235,9 +234,8 @@ RunmclAllChrs ()
 	input=$1
 	maxDist=$2
 
-	for chr in 1 
-#2 3 4 5 6 7 8 9 10 \
-#11 12 13 14 15 16 17 18 19 20 21 22 X 
+	for chr in 1 2 3 4 5 6 7 8 9 10 \
+11 12 13 14 15 16 17 18 19 20 21 22 X 
 	do
 		echo "Chr"$chr
 		ExtractByChrS $input $chr $maxDist
@@ -338,7 +336,12 @@ done
 
 startTime=$(date +"%T")
 echo "Current time : $startTime"
-
+echo "Check args:"
+echo "Arg1 is "$1
+echo "Arg2 is "$2
+echo "Arg3 is "$3
+echo "Arg4 is "$4
+echo "---------------------------------------------------------------------------"
 #cancer="colon"
 #folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
 mkdir $cancer"_run"
