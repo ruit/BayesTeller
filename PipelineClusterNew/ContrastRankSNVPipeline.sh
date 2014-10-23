@@ -186,7 +186,7 @@ cat $kgenomeVar | awk '{print $1"_"$2"\tcomVar"}' > comSNV
 
 
 cat "all"$cancer"Cancertumor" comSNV| grep -v \< | sed "s/_/\t/g" | sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancertumor2"
-rm "all"$cancer"Cancertumor"
+#rm "all"$cancer"Cancertumor"
 mv "all"$cancer"Cancertumor2" "all"$cancer"Cancertumor"
 python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/listSortedPairs.py "all"$cancer"Cancertumor" | grep -v comVar >"all"$cancer"Cancertumor.filtered"
 echo "#INFO: common variants have been filtered out from tumor variants."
@@ -198,10 +198,10 @@ cat tumorSNV germSNV | sort | uniq -u | awk '{print $1 "\tvoid"}' > somatic
 #remove weird <M>, etc.
 cat "all"$cancer"Cancergermline" somatic comSNV | grep -v \< | sed "s/_/\t/g" |sort -k1,1 -k2,2 -n | awk '{print $1"_"$2"\t"$3}' > "all"$cancer"Cancergermline2"
 
-rm tumorSNV germSNV  somatic "all"$cancer"Cancergermline"
+rm tumorSNV germSNV  somatic 
 mv "all"$cancer"Cancergermline2" "all"$cancer"Cancergermline"
 python  /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/listSortedPairs.py "all"$cancer"Cancergermline" | grep -v comVar > "all"$cancer"Cancergermline.filtered"
-rm "all"$cancer"Cancergermline" "all"$cancer"Cancertumor"
+#rm "all"$cancer"Cancergermline" "all"$cancer"Cancertumor"
 echo "#INFO: common variants have been filtered out from germline variants."
 
 rm comSNV
