@@ -291,6 +291,16 @@ Nlihc=236
 Nluad=625
 Nprad=309
 
+#Oct 29, 2014
+#The total number of samples should be double checked from original data
+
+Nacc=91
+Nblca=129
+Npaad=95
+Npcpg=186
+Nskcm=371
+Nstad=280
+Nthca=429
 
 
 for cancer in colon kirc kirp lgg lihc luad prad
