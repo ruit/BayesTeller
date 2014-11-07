@@ -150,7 +150,7 @@ module load mcl
 
 RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered" $tempdir
 
-#ComputePvalue $tempdir
+ComputePvalue $tempdir
 
 
 CrossVD(){
@@ -175,7 +175,7 @@ CrossVD(){
 
 
 
-#CrossVD $tempdir"/"$cancer".bloc.Pval.model" $topN $tempdir
+CrossVD $tempdir"/"$cancer".bloc.Pval.model" $topN $tempdir
 
 
 startTime=$(date +"%T")
