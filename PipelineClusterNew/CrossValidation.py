@@ -7,7 +7,7 @@
 # Randomly mask some patients as test data
 
 import random, math
-import sys
+import sys, re
 
 
 infile1 = sys.argv[1]
@@ -66,6 +66,8 @@ def SortedKey2GivenStartEndAsList(input, outfile, testList):
 	testList=['Patient1','Patient2']
 
 	'''
+
+	import re
 	# June 19, 27, 2014
 	last_zuo=""
 	current_zuo=""
@@ -106,7 +108,8 @@ def SortedKey2GivenStartEndAsList(input, outfile, testList):
 				newlist=[]
 	
 				for e in patlist:
-					if re.match("Patient", e) and e not in testList:
+					fuhe=re.search("Patient", e)
+					if fuhe and e not in testList:
 						newlist.append(e) 
 				out.write(last_zuo+"\t"+str(len(unique1(newlist)))+"\n")
 	

@@ -7,26 +7,25 @@
 # Nov 5, 2014
 # Sample some patients simultaneously from germ /tumor for cross validation.
 
-cancer = $1
-dist = $2
-nTest = $3 # number of patients masked
-topN = $4
+cancer=$1
+dist=$2
+nTest=$3 # number of patients masked
+topN=$4
 
 
-tempdir=$cancer"_CV_"$RANDOM$RANDOM
+# path to tempdir and *.filtered
+path="/home/tianr/1Projects/1SNVblocks/RUN_Oct23/old/"
+
+
+tempdir=$cancer"_CrossValidation_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM
 mkdir $tempdir
 sampleSize="TCGAsampleN_hash_table.txt"
 
 
 
-cat $sampleSize | while IFS=\t read bing num
-	do
-		if [ $bing == $cancer ]; then
-			NsampleLeft= `expr $num - $nTest`
-			total=$num
-			echo $num
-			echo $total
-	done
+total=`cat $sampleSize | awk -v CA=$cancer '{if($1==CA) print $2}'`
+NsampleLeft=`expr $total - $nTest`
+#echo $NsampleLeft
 
 
 
@@ -37,6 +36,8 @@ germlineSample="all"$cancer"Cancergermline.filtered"
 #rank the SNV clusters by ContraskRank score, take the topN as the model
 
 
+module load mcl
+
 
 
 ExtractByChrS ()
@@ -44,6 +45,7 @@ ExtractByChrS ()
 	input=$1
 	chr=$2
 	maxDist=$3
+	tempdir=$4
 	
 	cat $input |sed "s/_/\t/g" | awk -v CHR=$chr '{ if ($1 == CHR) print $0}' > $tempdir"/"$input"_chr"$chr
 	
@@ -51,9 +53,13 @@ ExtractByChrS ()
 'function abs(x){return ((x < 0.0) ? -x : x)} \
 {if (abs($2-$1) <= MAX) print CHR "_"$1 "\t"CHR"_"$2"\t"abs($2-$1)}' > $tempdir"/"$input"_chr"$chr".pair"
 	
-	rm $tempdir"/"$input"_chr"$chr
+	#rm $tempdir"/"$input"_chr"$chr
 	}
 
+
+#ExtractByChrS $tumorSample X 500 $tempdir
+#chr="X"
+#mcl $tempdir"/"$input"_chr"$chr".pair" --abc  -o $tempdir"/"$input"_chr"$chr".pair.cluster"
 
 
 RunmclAllChrs () 
@@ -61,12 +67,13 @@ RunmclAllChrs ()
 	input=$1
 	maxDist=$2
 	input2=$3
+	tempdir=$4
 
-	for chr in 1 2 3 4 5 6 7 8 9 10 \
-11 12 13 14 15 16 17 18 19 20 21 22 X 
+	for chr in X 1 2 3 4 5 6 7 8 9 10 \
+11 12 13 14 15 16 17 18 19 20 21 22
 	do
 		echo "Chr"$chr
-		ExtractByChrS $input $chr $maxDist
+		ExtractByChrS $input $chr $maxDist $tempdir
 		mcl $tempdir"/"$input"_chr"$chr".pair" --abc  -o $tempdir"/"$input"_chr"$chr".pair.cluster"
 		
 		#@Oct 20, 2014 Mon
@@ -89,14 +96,14 @@ RunmclAllChrs ()
 		cat $tempdir"/"$input"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input"_chr"$chr".raw.out2"
 		cat $tempdir"/"$input2"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input2"_chr"$chr".raw.out2"
 
-		rm $tempdir"/"*"_chr"$chr".pair"*
-		rm $tempdir"/"*"_chr"$chr
+		#rm $tempdir"/"*"_chr"$chr".pair"*
+		#rm $tempdir"/"*"_chr"$chr
 	done
 
 	cat $tempdir"/"$input*.raw.out2  > $tempdir"/"$input".snvfreq"
 	cat $tempdir"/"$input2*.raw.out2  > $tempdir"/"$input2".snvfreq"
 
-	rm $tempdir"/"*raw*
+	#rm $tempdir"/"*raw*
 
 	}
 ### Oct 21, 2014 modification focused!!!
@@ -109,7 +116,7 @@ ComputePvalue(){
 # weigh by num of patients
 # filter remaining "common variants"
 
-
+	tempdir=$1
 	cutoff=0.05
 
 #"all"$cancer"Cancertumor.filtered"
@@ -141,23 +148,34 @@ echo "--------------------------------------------------------------------------
 
 module load mcl
 
-RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered"
+RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered" $tempdir
 
-ComputePvalue
+#ComputePvalue $tempdir
 
 
 CrossVD(){
 
+	modelFile=$1
+	topN=$2
+	tempdir=$3	
+
 	cat $tempdir"/testPatientsList.txt" | while IFS=\t read testPatient
 		do
- 			echo $testPatient
+ 			#echo $testPatient
 			cat $tumorSample | grep -w $testPatient | cut -f1 >$tempdir"/"$tumorSample"_"$testPatient".snvs"
 			cat $germlineSample | grep -w $testPatient | cut -f1 >$tempdir"/"$germlineSample"_"$testPatient".snvs"
+			
+			python NaiveBayesSNV.py $modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
+			python NaiveBayesSNV.py $modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
+
+
 		done
 
 	}
 
 
+
+#CrossVD $tempdir"/"$cancer".bloc.Pval.model" $topN $tempdir
 
 
 startTime=$(date +"%T")
