@@ -53,7 +53,7 @@ ExtractByChrS ()
 'function abs(x){return ((x < 0.0) ? -x : x)} \
 {if (abs($2-$1) <= MAX) print CHR "_"$1 "\t"CHR"_"$2"\t"abs($2-$1)}' > $tempdir"/"$input"_chr"$chr".pair"
 	
-	#rm $tempdir"/"$input"_chr"$chr
+	rm $tempdir"/"$input"_chr"$chr
 	}
 
 
@@ -96,14 +96,14 @@ RunmclAllChrs ()
 		cat $tempdir"/"$input"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input"_chr"$chr".raw.out2"
 		cat $tempdir"/"$input2"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input2"_chr"$chr".raw.out2"
 
-		#rm $tempdir"/"*"_chr"$chr".pair"*
-		#rm $tempdir"/"*"_chr"$chr
+		rm $tempdir"/"*"_chr"$chr".pair"*
+		rm $tempdir"/"*"_chr"$chr
 	done
 
 	cat $tempdir"/"$input*.raw.out2  > $tempdir"/"$input".snvfreq"
 	cat $tempdir"/"$input2*.raw.out2  > $tempdir"/"$input2".snvfreq"
 
-	#rm $tempdir"/"*raw*
+	rm $tempdir"/"*raw*
 
 	}
 ### Oct 21, 2014 modification focused!!!
@@ -131,26 +131,6 @@ awk -v N=$NsampleLeft -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\
 }
 
 
-#-------------------------------------------------------------------------------
-
-startTime=$(date +"%T")
-echo "Current time : $startTime"
-echo "Check args:"
-echo "Arg1 is "$1
-echo "Arg2 is "$2
-echo "Arg3 is "$3
-echo "Arg4 is "$4
-echo "---------------------------------------------------------------------------"
-#cancer="colon"
-#folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
-
-### require mcl
-
-module load mcl
-
-RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered" $tempdir
-
-ComputePvalue $tempdir
 
 
 CrossVD(){
@@ -175,7 +155,39 @@ CrossVD(){
 
 
 
+
+#-------------------------------------------------------------------------------
+
+startTime=$(date +"%T")
+echo "Current time : $startTime"
+echo "Check args:"
+echo "Arg1 is "$1
+echo "Arg2 is "$2
+echo "Arg3 is "$3
+echo "Arg4 is "$4
+echo "---------------------------------------------------------------------------"
+#cancer="colon"
+#folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
+
+### require mcl
+
+module load mcl
+
+RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered" $tempdir
+
+ComputePvalue $tempdir
+
 CrossVD $tempdir"/"$cancer".bloc.Pval.model" $topN $tempdir
+
+
+#log liklihood ratio:
+
+cat $tempdir"/""all"$cancer"Cancertumor.filtered"*.prob | \
+awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA") print $0"\tNormal\tNA"}' | sort -k4 -n -r >$tempdir"/"$cancer"_tumorTest.summary"
+
+cat $tempdir"/""all"$cancer"Cancergermline.filtered"*.prob | \
+awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA") print $0"\tNormal\tNA"}' | sort -k4 -n -r >$tempdir"/"$cancer"_germlineTest.summary"
+
 
 
 startTime=$(date +"%T")
