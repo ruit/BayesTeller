@@ -1,26 +1,25 @@
 # Tian R. <tianremiATgmail.com>
 # Oct 30, 2014
-# Oct 31, 2014
-# Do leave-one-out cross validation for a NB model to discriminate cancer from normal samples
-
-# Nov 4, 2014
 # Nov 5, 2014
 # Sample some patients simultaneously from germ /tumor for cross validation.
+
+
+# Dec 3, always use qsub, always full path, always in parallel
 
 cancer=$1
 dist=$2
 nTest=$3 # number of patients masked
-topN=$4
+topN=1000 # default is 1000
+sampleSize="/home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/TCGAsampleN_hash_table.txt"
+
 
 
 # path to tempdir and *.filtered
-path="/home/tianr/1Projects/1SNVblocks/RUN_Oct23/old/"
+path="/home/tianr/1Projects/1SNVblocks/run_BayesTeller_Oct23_Dec30_2014/"
+#path="/home/tianr/1Projects/1SNVblocks/RUN_Oct23/old/"
 
 
 tempdir=$cancer"_CrossValidation_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM
-mkdir $tempdir
-sampleSize="TCGAsampleN_hash_table.txt"
-
 
 
 total=`cat $sampleSize | awk -v CA=$cancer '{if($1==CA) print $2}'`
@@ -36,7 +35,6 @@ germlineSample="all"$cancer"Cancergermline.filtered"
 #rank the SNV clusters by ContraskRank score, take the topN as the model
 
 
-module load mcl
 
 
 
@@ -145,8 +143,10 @@ CrossVD(){
 			cat $tumorSample | grep -w $testPatient | cut -f1 >$tempdir"/"$tumorSample"_"$testPatient".snvs"
 			cat $germlineSample | grep -w $testPatient | cut -f1 >$tempdir"/"$germlineSample"_"$testPatient".snvs"
 			
-			python NaiveBayesSNV.py $modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
-			python NaiveBayesSNV.py $modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
+			python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
+$modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
+			python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
+$modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
 
 
 		done
@@ -158,19 +158,9 @@ CrossVD(){
 
 #-------------------------------------------------------------------------------
 
-startTime=$(date +"%T")
-echo "Current time : $startTime"
-echo "Check args:"
-echo "Arg1 is "$1
-echo "Arg2 is "$2
-echo "Arg3 is "$3
-echo "Arg4 is "$4
-echo "---------------------------------------------------------------------------"
-#cancer="colon"
-#folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
+run(){
 
-### require mcl
-
+mkdir $tempdir
 module load mcl
 
 RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermline.filtered" $tempdir
@@ -187,13 +177,32 @@ awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA"
 
 cat $tempdir"/""all"$cancer"Cancergermline.filtered"*.prob | \
 awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA") print $0"\tNormal\tNA"}' | sort -k4 -n -r >$tempdir"/"$cancer"_germlineTest.summary"
+}
 
 
 
-startTime=$(date +"%T")
-echo "Current time : $startTime"
-echo "###################################################################"
 
+if [ $# == 3 ]; then
+	startTime=$(date +"%T")
+	echo "Current time : $startTime"
+	echo "Check args:"
+	echo "Arg1 is "$1
+	echo "Arg2 is "$2
+	echo "Arg3 is "$3
+	echo "---------------------------------------------------------------------------"
+#cancer="colon"
+#folder="/projects/common/tcga/coad/hgsc.bcm.edu_COAD.IlluminaGA_DNASeq_Cont.Level_2.1.5.0/data/"
+### require mcl
+	
+	run
+
+	startTime=$(date +"%T")
+	echo "Current time : $startTime"
+	echo "###################################################################"
+
+else
+	echo "Error, we need 3 arguments here!"
+fi
 
 #X_11
 #1_222
