@@ -1,3 +1,4 @@
+#!/bin/sh -login
 # Tian R. <tianremiATgmail.com>
 # Oct 30, 2014
 # Nov 5, 2014
@@ -12,6 +13,7 @@ nTest=$3 # number of patients masked
 topN=1000 # default is 1000
 sampleSize="/home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/TCGAsampleN_hash_table.txt"
 
+module load mcl
 
 
 # path to tempdir and *.filtered
@@ -19,7 +21,7 @@ path="/home/tianr/1Projects/1SNVblocks/run_BayesTeller_Oct23_Dec30_2014/"
 #path="/home/tianr/1Projects/1SNVblocks/RUN_Oct23/old/"
 
 
-tempdir=$cancer"_CrossValidation_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM
+tempdir=$path$cancer"_CrossValidation_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM"output"
 
 
 total=`cat $sampleSize | awk -v CA=$cancer '{if($1==CA) print $2}'`
@@ -83,6 +85,7 @@ RunmclAllChrs ()
 		
 		cat $tempdir"/"$input"_chr"$chr".pair.cluster.StartEnd" | cut -f1 | awk '{print $0"\tA_start"}' >  $tempdir"/"$input"_chr"$chr".pair.cluster.Start" 
 		cat $tempdir"/"$input"_chr"$chr".pair.cluster.StartEnd" | cut -f2 | awk '{print $0"\tZ_end"}' >  $tempdir"/"$input"_chr"$chr".pair.cluster.End"
+	
 		cat  $tempdir"/"$input"_chr"$chr $tempdir"/"$input"_chr"$chr".pair.cluster.Start" $tempdir"/"$input"_chr"$chr".pair.cluster.End" | sort -k1,1 -n -k2,2 > $tempdir"/"$input"_chr"$chr".raw"
 		
 		###germline, tumor go together! Nov 5, 2014
@@ -94,14 +97,14 @@ RunmclAllChrs ()
 		cat $tempdir"/"$input"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input"_chr"$chr".raw.out2"
 		cat $tempdir"/"$input2"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input2"_chr"$chr".raw.out2"
 
-		rm $tempdir"/"*"_chr"$chr".pair"*
-		rm $tempdir"/"*"_chr"$chr
+		#rm $tempdir"/"*"_chr"$chr".pair"*
+		#rm $tempdir"/"*"_chr"$chr
 	done
 
 	cat $tempdir"/"$input*.raw.out2  > $tempdir"/"$input".snvfreq"
 	cat $tempdir"/"$input2*.raw.out2  > $tempdir"/"$input2".snvfreq"
 
-	rm $tempdir"/"*raw*
+	#rm $tempdir"/"*raw*
 
 	}
 ### Oct 21, 2014 modification focused!!!
