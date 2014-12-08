@@ -1,0 +1,15 @@
+brca	501
+colon	220
+kirc	274
+kirp	196
+lgg	468
+lihc	236
+luad	625
+prad	309
+acc	91
+blca	129
+paad	95
+pcpg	186
+skcm	371
+stad	280
+thca	429
