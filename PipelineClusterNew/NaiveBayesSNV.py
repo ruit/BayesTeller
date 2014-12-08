@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Nov 3, 2014
 # Nov 4, 2014
-
+# @Dec 5, 2014
 #X_11
 #1_222
 
@@ -93,15 +93,15 @@ def NBmodel (modelFile, patientVariants, topN=20, laplace=float(0.5/1092)):
 			pN=pN+math.log10(pNormalDict[chr][pos])	
 			pT=pT+math.log10(pTumorDict[chr][pos])
 	if timer == 0:
-		return ["NA", "NA"]	
+		return "NA"	
 	else:		
-		return [math.pow(10,pN), math.pow(10,pT)]
+		return round(pT-pN) #the log liklihood ratio, tumor vs normal, Dec 5, 2014
 	
 
 def main():
 
 	posterior=NBmodel(modelFile, patientVariants, int(topN), laplace=float(0.5/1092))	
-	print str(posterior[0])+"\t"+str(posterior[1])
+	print str(posterior)
 
 
 if __name__=="__main__":

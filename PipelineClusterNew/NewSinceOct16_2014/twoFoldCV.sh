@@ -21,7 +21,9 @@ path="/home/tianr/1Projects/1SNVblocks/run_BayesTeller_Oct23_Dec30_2014/"
 #path="/home/tianr/1Projects/1SNVblocks/RUN_Oct23/old/"
 
 
-tempdir=$path$cancer"_CrossValidation_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM"output"
+#Dec 8, 2014
+#dist, topN are 2 paras
+tempdir=$path$cancer"_CV_d"$dist"_n"$topN$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM"output"
 
 
 total=`cat $sampleSize | awk -v CA=$cancer '{if($1==CA) print $2}'`
@@ -97,14 +99,14 @@ RunmclAllChrs ()
 		cat $tempdir"/"$input"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input"_chr"$chr".raw.out2"
 		cat $tempdir"/"$input2"_chr"$chr".raw.out"| awk -v CHR=$chr '{print "Chr"CHR":"$0}' >$tempdir"/"$input2"_chr"$chr".raw.out2"
 
-		#rm $tempdir"/"*"_chr"$chr".pair"*
-		#rm $tempdir"/"*"_chr"$chr
+		rm $tempdir"/"*"_chr"$chr".pair"*
+		rm $tempdir"/"*"_chr"$chr
 	done
 
 	cat $tempdir"/"$input*.raw.out2  > $tempdir"/"$input".snvfreq"
 	cat $tempdir"/"$input2*.raw.out2  > $tempdir"/"$input2".snvfreq"
 
-	#rm $tempdir"/"*raw*
+	rm $tempdir"/"*raw*
 
 	}
 ### Oct 21, 2014 modification focused!!!
@@ -146,10 +148,10 @@ CrossVD(){
 			cat $tumorSample | grep -w $testPatient | cut -f1 >$tempdir"/"$tumorSample"_"$testPatient".snvs"
 			cat $germlineSample | grep -w $testPatient | cut -f1 >$tempdir"/"$germlineSample"_"$testPatient".snvs"
 			
-			python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
-$modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
-			python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
-$modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
+		#	python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
+#$modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
+		#	python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
+#$modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
 
 
 		done

@@ -50,8 +50,9 @@ done
 
 
 
-for ((i=0; i<10; i++)); #10 time 2fold CV
+for ((j=0; j<10; j++)); #10 time 2fold CV
 do
+	echo $j
 	subCVJobs
-	sleep $((3*60))
+#	sleep $((1*60))
 done
