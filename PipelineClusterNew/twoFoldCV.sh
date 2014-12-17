@@ -10,7 +10,7 @@
 cancer=$1
 dist=$2
 nTest=$3 # number of patients masked
-topN=1000 # default is 1000
+#topN=1000 # default is 1000
 sampleSize="/home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/TCGAsampleN_hash_table.txt"
 
 module load mcl
@@ -23,7 +23,7 @@ path="/home/tianr/1Projects/1SNVblocks/run_BayesTeller_Oct23_Dec30_2014/"
 
 #Dec 8, 2014
 #dist, topN are 2 paras
-tempdir=$path$cancer"_CV_d"$dist"_n"$topN$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM"output"
+tempdir=$path$cancer"_CV_d"$dist"_"$RANDOM"_"`date | cut -d " " -f5`"_"$RANDOM"output"
 
 
 total=`cat $sampleSize | awk -v CA=$cancer '{if($1==CA) print $2}'`
@@ -139,19 +139,13 @@ awk -v N=$NsampleLeft -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\
 CrossVD(){
 
 	modelFile=$1
-	topN=$2
-	tempdir=$3	
+	tempdir=$2	
 
 	cat $tempdir"/testPatientsList.txt" | while IFS=\t read testPatient
 		do
  			#echo $testPatient
 			cat $tumorSample | grep -w $testPatient | cut -f1 >$tempdir"/"$tumorSample"_"$testPatient".snvs"
 			cat $germlineSample | grep -w $testPatient | cut -f1 >$tempdir"/"$germlineSample"_"$testPatient".snvs"
-			
-		#	python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
-#$modelFile $tempdir"/"$tumorSample"_"$testPatient".snvs" $topN > $tempdir"/"$tumorSample"_"$testPatient".snvs.prob"
-		#	python /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/NaiveBayesSNV.py \
-#$modelFile $tempdir"/"$germlineSample"_"$testPatient".snvs" $topN > $tempdir"/"$germlineSample"_"$testPatient".snvs.prob"
 
 
 		done
@@ -172,16 +166,10 @@ RunmclAllChrs "all"$cancer"Cancertumor.filtered" $dist "all"$cancer"Cancergermli
 
 ComputePvalue $tempdir
 
-CrossVD $tempdir"/"$cancer".bloc.Pval.model" $topN $tempdir
+CrossVD $tempdir"/"$cancer".bloc.Pval.model" $tempdir
 
 
-#log liklihood ratio:
 
-cat $tempdir"/""all"$cancer"Cancertumor.filtered"*.prob | \
-awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA") print $0"\tNormal\tNA"}' | sort -k4 -n -r >$tempdir"/"$cancer"_tumorTest.summary"
-
-cat $tempdir"/""all"$cancer"Cancergermline.filtered"*.prob | \
-awk '{if($2>$1) print $0"\tTumor\t"(log($2/$1)/log(10));if($1=="NA" && $2 =="NA") print $0"\tNormal\tNA"}' | sort -k4 -n -r >$tempdir"/"$cancer"_germlineTest.summary"
 }
 
 
