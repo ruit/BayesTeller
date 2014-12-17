@@ -58,7 +58,7 @@ $tempdir"/"$input".raw" $tempdir"/"$input2".raw" $totalPatientList $tempdir
 	cat $tempdir"/"$input".raw.outB"  | sed "s/Chr[0-9X]*://2g" > $tempdir"/"$input".snvfreqB"
 	cat $tempdir"/"$input2".raw.outB" | sed "s/Chr[0-9X]*://2g" > $tempdir"/"$input2".snvfreqB"
 
-	#rm $tempdir"/"*raw*
+	rm $tempdir"/"*raw*
 
 	NsampleLeft=`cat $tempdir"/testPatList4B.tab" | wc -l`
 #"all"$cancer"Cancertumor.filtered"
@@ -80,7 +80,8 @@ awk -v N=$NsampleLeft -v CUT=$cutoff '{if ($1 == $3 && ($2/N) <= CUT) print $1"\
 	Rscript /home/tianr/1Projects/1SNVblocks/NewSinceOct16_2014/bionorm.R $tempdir"/blocB"
 	cat $tempdir"/blocB.pval" | sort -k5 -n -r > $tempdir"/blocB.Pval.model"
 	rm $tempdir"/blocB" $tempdir"/blocB.pval"
-
+	
+	rm $tempdir"/"*.snvfreq*	
 
 	cat $tempdir"/testPatList4A.tab" | while IFS=\t read testPatient
 		do
