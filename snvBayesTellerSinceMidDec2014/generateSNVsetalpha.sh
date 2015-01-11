@@ -4,9 +4,11 @@
 modelFileOri=$1
 alpha=$2
 
+path="/home/tianr/1Projects/1SNVblocks/snvBayesTellerSinceMidDec2014/"
+
 cat $modelFileOri | cut -f2 | sort | uniq -c | sort -k2 -n > $modelFileOri".uniqc"
 
-Rscript ReFilterSNVbyCumulativeCoverage.R \
+Rscript $path"ReFilterSNVbyCumulativeCoverage.R" \
 $modelFileOri".uniqc" $alpha \
 $alpha"_"$modelFileOri"_temp.C"
 
