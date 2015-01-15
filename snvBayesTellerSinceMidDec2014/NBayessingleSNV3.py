@@ -6,6 +6,7 @@
 #1_22
 #Dec 22, 2014 @Dec 23, 2014
 #model file should be sorted based on freq tumor, Dec 23, 2014
+#@Jan15, 2015, do not use round(), leave some decimal at least 3
 
 import re, math, sys
 from collections import defaultdict
@@ -17,7 +18,7 @@ total = sys.argv[3]
 topN = sys.argv[4]
 
 InExclude= sys.argv[5]
-
+#"take" or "remove" 
 
 def NBmodelInclude (modelFile, patientVariants, total, topN=20, laplace=float(0.5/1092)):
 	
@@ -81,7 +82,7 @@ def NBmodelInclude (modelFile, patientVariants, total, topN=20, laplace=float(0.
 	if timer == 0:
 		return "NA"	#no hit in the model	
 	else:		
-		return round(pT-pN) #the log liklihood ratio, tumor vs normal, Dec 5, 2014
+		return (pT-pN) #the log liklihood ratio, tumor vs normal, Dec 5, 2014
 	
 
 
@@ -153,7 +154,7 @@ def NBmodelRemove (modelFile, patientVariants, total, topN=20, laplace=float(0.5
 	if timer == 0:
 		return "NA"	#no hit in the model	
 	else:		
-		return round(pT-pN) #the log liklihood ratio, tumor vs normal, Dec 5, 2014
+		return (pT-pN) #the log liklihood ratio, tumor vs normal, Dec 5, 2014
 	
 
 

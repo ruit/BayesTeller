@@ -12,7 +12,7 @@ sortingBy=$2
 #array_alpha=(0.000001) # Jan12, 2015, 10e-3, -6
 #array_alpha=(0.05 0.01 0.005 0.001 0.0001 0.00001 0.000001)
 array_alpha=(1 5 10 50 100 1000 5000 10000 100000)
-
+suffix=$3
 
 modelSort(){
 
@@ -20,16 +20,17 @@ modelSort(){
 	patForModeling=$2	
 	#total=`cat testPatList4B.tab | wc -l` 
 	total=`cat $patForModeling | wc -l`
-	
-	cat $modelfile | awk '{print ($3+0.5)/($2+0.5)}' > $modelfile".temp1" # ratio tumor N / germ N 
-	cat $modelfile | awk -v TOT=$total '{print $1"\t"$3"\t"TOT"\t"($2/TOT)}' > $modelfile".temp2"
+	sortingBy=$3
+		
+	cat $modelfile | awk '{print ($3+0.5)/($2+0.5)}' > $modelfile".temp1"$sortingBy # ratio tumor N / germ N 
+	cat $modelfile | awk -v TOT=$total '{print $1"\t"$3"\t"TOT"\t"($2/TOT)}' > $modelfile".temp2"$sortingBy
 	
 		
-	Rscript /home/tianr/1Projects/1SNVblocks/snvBayesTellerSinceMidDec2014/binorm2.R $modelfile".temp2"
+	Rscript /home/tianr/1Projects/1SNVblocks/snvBayesTellerSinceMidDec2014/binorm2.R $modelfile".temp2"$sortingBy
  
-	cat $modelfile".temp2.pval" | cut -f5 > $modelfile".temp3" # Binormial p
-	cat $modelfile | awk '{print ($3-$2)}' > $modelfile".temp4" # tumor N - germ N
-	paste $modelfile $modelfile".temp1" $modelfile".temp3" $modelfile".temp4" > $modelfile".out"
+	cat $modelfile".temp2"$sortingBy".pval" | cut -f5 > $modelfile".temp3"$sortingBy # Binormial p
+	cat $modelfile | awk '{print ($3-$2)}' > $modelfile".temp4"$sortingBy # tumor N - germ N
+	paste $modelfile $modelfile".temp1"$sortingBy $modelfile".temp3"$sortingBy $modelfile".temp4"$sortingBy > $modelfile".out"$sortingBy
 	rm $modelfile".temp"*
 	}
 
@@ -113,9 +114,11 @@ $file $total $i "take" > $file"_"$i$outSuffix
 
 cd $path$dir
 
-modelSort modelA.sorted testPatList4B.tab
-modelSort modelB.sorted testPatList4A.tab
+modelSort modelA.sorted testPatList4B.tab $sortingBy
+modelSort modelB.sorted testPatList4A.tab $sortingBy
 
-moreCutoff $dir $sortingBy $array_alpha  modelA.sorted.out testPatList4B.tab .snvsa .lodn
-moreCutoff $dir $sortingBy $array_alpha  modelB.sorted.out testPatList4A.tab .snvsb .lodn
+moreCutoff $dir $sortingBy $array_alpha  modelA.sorted.out testPatList4B.tab .snvsa $suffix
+moreCutoff $dir $sortingBy $array_alpha  modelB.sorted.out testPatList4A.tab .snvsb $suffix
+
+#".lodn"
 
