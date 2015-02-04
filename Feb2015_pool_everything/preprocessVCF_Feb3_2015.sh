@@ -63,15 +63,13 @@ FilterSNVbyMoreParas(){
 		
 		echo $vcf
 		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)!=substr($11, 1, 3)) print $0}' \
-| awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($11, A, ":" ); \
-if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH ) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $outdir"/"$vcf".somatic"
+| awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($11, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH ) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $outdir"/"$vcf".somatic"
 		# look at col 11
 		cat $outdir"/"$vcf".somatic" | cut -f1,2 | sort | uniq > $outdir"/"$vcf".somatic.coord"
 		
 
 		zcat $filefolder$vcf | grep -v "#" | awk '{if (substr($10, 1, 3)==substr($11, 1, 3)) print $0}' \
-| awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($10, A, ":" ); \
-if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $outdir"/"$vcf".germline"
+| awk -v BQ=$bq -v FA=$fa -v DP=$dp -v MLH=$mlen '{split($10, A, ":" ); if (A[6]>=BQ && A[4]>=FA && A[3]>=DP && length($4) <= MLH && length($5) <= MLH) print $1"\t"$2"\t"$3"\t"$4"\t"$5 }' > $outdir"/"$vcf".germline"
 		# look at col 10
 		cat $outdir"/"$vcf".germline" | cut -f1,2 | sort | uniq > $outdir"/"$vcf".germline.coord"
 		
@@ -139,7 +137,7 @@ LabelPatients(){
 	num=0
 
 	
-	for patient in `ls $patientfolder | grep $typ`
+	for patient in `ls $patientfolder |grep coord| grep $typ`
 	do
 		
 		num=`expr $num + 1` 	
@@ -147,7 +145,8 @@ LabelPatients(){
 		cat $patientfolder$patient | awk -v ID=$num '{print $0 "\t" "Patient"ID}'> $patientfolder$patient"_"$typ".temp"
 		
 	done
-	
+
+	num=0	
 	cat $patientfolder*"_"$typ".temp" | awk '{print $1"_"$2"\t"$3}' | gzip> $out
 	# Oct 20, Do not sort here, as it will be sorted again
 
