@@ -12,6 +12,9 @@
 # Oct 21, 2014
 
 # Feb 3, 2015 pool all vcf data together, without filtering out commeon variants.
+# Feb 4, 2015, label also cancer type
+
+
 
 #---------------------------------------------------------
 #the name of cancer type
@@ -102,7 +105,7 @@ FilterSNVbyPASS(){
 	for vcf in `ls $filefolder | grep vcf.gz`
 	do
 
-		#echo $vcf
+		echo $vcf
 		zcat $filefolder$vcf | grep -v "#" | awk '{if ($7=="PASS" && substr($10, 1, 3)!=substr($11, 1, 3) && length($4) <= $mlen && length($5) <= $mlen) print $1"\t"$2"\t"$4"\t"$5}' > $outdir"/"$vcf".somatic"
 		cat $outdir"/"$vcf".somatic" | cut -f1,2 | sort | uniq > $outdir"/"$vcf".somatic.coord"
 		
@@ -142,7 +145,7 @@ LabelPatients(){
 		
 		num=`expr $num + 1` 	
 		#echo $num 
-		cat $patientfolder$patient | awk -v ID=$num '{print $0 "\t" "Patient"ID}'> $patientfolder$patient"_"$typ".temp"
+		cat $patientfolder$patient | awk -v ID=$num -v CAN=$cancer '{print $0 "\tPatient:"CAN":"ID}'> $patientfolder$patient"_"$typ".temp"
 		
 	done
 
