@@ -53,14 +53,15 @@ def extractPatIDs(testList, aggreData, outfilePath, suffix):
 	patSNV_dict={}
 	
 	for line in gzip.open(aggreData,"rb"):
+		array=line.strip("\n").split("\t")
 		for pat in testList:
-			if pat in line.strip("\n").split("\t")[1].split(","):
-				if not pat in patSNV_dict:
-					patSNV_dict[pat]=[line.strip("\n").split("\t")[0]]
-				else:
-					patSNV_dict[pat]=patSNV_dict[pat].append(line.strip("\n").split("\t")[0])	
+			
+			if pat in array[1].split(","):
+				
+				patSNV_dict.setdefault(pat,[]).append(array[0])
+				#print pat, array[0]
 	
-	
+#	print patSNV_dict
 	for pat in testList:
 		f_out=gzip.open(outfilePath+pat+"_"+suffix+".gz", "wb")
 		
@@ -68,12 +69,12 @@ def extractPatIDs(testList, aggreData, outfilePath, suffix):
 		else:	
 			f_out.write("\n".join(patSNV_dict.get(pat)))
 		f_out.close()
+
+	return patSNV_dict
 	
 	del testList
 	del patSNV_dict
 	del line
-	
-	return 0
 
 
 #debug:
@@ -159,13 +160,14 @@ def CountNonRedundantTrainingFreq(inputfile, outfile, pattern, testList):
 	
 
 	f=gzip.open(inputfile, "r")	
-
 	out=open(outfile, "w")
+	freqDict={}#Feb 24, 2015
 
 	for line in f:
 
 		outStr=""
-	
+		freq=[]
+		
 		array=line.strip("\n").split("\t")
 		
 		for i in range(len(array)):
@@ -178,9 +180,14 @@ def CountNonRedundantTrainingFreq(inputfile, outfile, pattern, testList):
 				
 				# patlist might contain "void" (empty) elements
 				newG=PurifyList(germPat, pattern, testList)
-
-				outStr=outStr+"\t"+str(len(unique1(newG)))
+				
+				freq.append(len(unique1(newG)))
 		
+				outStr=outStr+"\t"+str(len(unique1(newG)))
+					
+		freqDict[chrPos]=freq
+		freq=[]
+
 		out.write(outStr+"\n")
 		outStr=""
 
@@ -190,6 +197,7 @@ def CountNonRedundantTrainingFreq(inputfile, outfile, pattern, testList):
 
 	f.close()
 	out.close()
+	return freqDict
 
 
 
@@ -234,19 +242,49 @@ splittedList=GenerateTestList(sampleList)
 
 #step three, freq based on train patient list
 
+#use first half for training, testdat is [1]
+Dict_freq_germ_A=CountNonRedundantTrainingFreq(germFile+".ext.gz", tempDir+"/germ_freq.A", ".", splittedList[1]) 
+#print Dict_freq_germ_A
+Dict_freq_tumor_A=CountNonRedundantTrainingFreq(tumorFile+".ext.gz", tempDir+"/tumor_freq.A", ".", splittedList[1]) 
+writeTestPatList(splittedList[1], tempDir+"/testPartA.tab")
+Dict_snv_germ_A=extractPatIDs(splittedList[1], germFile+".ext.gz", tempDir+"/", "germ.snvsa")
+#print Dict_snv_germ_A
+Dict_snv_tumor_A=extractPatIDs(splittedList[1], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsa")
+#
 
-#use first half for training
-CountNonRedundantTrainingFreq(germFile+".ext.gz", tempDir+"/germ_freq.A", ".", splittedList[1]) 
+Dict_Bayes_germ={}#patient, lists of SNVs-> logRatio
+for pat in splittedList[1]: #test patients based on a pool of SNVs
+	#for "germ" samples
+	if Dict_snv_germ_A.get(pat) is None: Dict_Bayes_germ[pat]=None
+	else:
+		#print Dict_snv_germ_A.get(pat)
+		Dict_Bayes_germ[pat]=[(0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0]) \
+for snv in Dict_snv_germ_A.get(pat)] # zero!
+	
+print Dict_Bayes_germ
 
-CountNonRedundantTrainingFreq(tumorFile+".ext.gz", tempDir+"/tumor_freq.A", ".", splittedList[1]) 
+Dict_Bayes_tumor={}
+for pat in splittedList[1]: #test patients based on a pool of SNVs
+	#for "tumor" samples
+	if Dict_snv_tumor_A.get(pat) is None: Dict_Bayes_tumor[pat]=None
+	else:
+		Dict_Bayes_tumor[pat]=[(0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0]) \
+for snv in Dict_snv_tumor_A.get(pat)] # zero!
 
-writeTestPatList(splittedList[1], tempDir+"/testA.tab")
+print Dict_Bayes_tumor
+
+del Dict_snv_tumor_A 
+del Dict_snv_germ_A
+del Dict_freq_tumor_A
+del Dict_freq_germ_A
 
 
-
-extractPatIDs(splittedList[1], germFile+".ext.gz", tempDir+"/", "germ.snvsa")
-extractPatIDs(splittedList[1], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsa")
-
+#use the second half tor training, testdata is [0]
+#CountNonRedundantTrainingFreq(germFile+".ext.gz", tempDir+"/germ_freq.B", ".", splittedList[0]) 
+#CountNonRedundantTrainingFreq(tumorFile+".ext.gz", tempDir+"/tumor_freq.B", ".", splittedList[0]) 
+#writeTestPatList(splittedList[0], tempDir+"/testPartB.tab")
+#extractPatIDs(splittedList[0], germFile+".ext.gz", tempDir+"/", "germ.snvsb")
+#extractPatIDs(splittedList[0], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsb")
 
 
 
