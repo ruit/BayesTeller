@@ -2,11 +2,12 @@
 
 #Feb 20, 2015
 #Feb 23, 2015 Use one or two good days to write one major program, do not delay!!!!!!!!!
-#Feb 24, 2015
+#Feb 24, 2015, Feb26 Run over 3909 patients, 2000SNVs, 30min !!!!!
 #Tian R. <tianremi@gmail.com>
 
 
 import sys, os, gzip, re, random
+import math
 
 '''
 1 A set of SNVs
@@ -217,7 +218,7 @@ try:
 	sampleList=sys.argv[3] #the total list of samples
 	germFile=sys.argv[4] # the aggregated germline file
 	tumorFile=sys.argv[5] # the aggregated tumor file
-	print sys.argv
+	#print sys.argv
 
 except:
 	pass
@@ -258,20 +259,18 @@ for pat in splittedList[1]: #test patients based on a pool of SNVs
 	if Dict_snv_germ_A.get(pat) is None: Dict_Bayes_germ[pat]=None
 	else:
 		#print Dict_snv_germ_A.get(pat)
-		Dict_Bayes_germ[pat]=[(0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0]) \
+		Dict_Bayes_germ[pat]=[math.log10((0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0])) \
 for snv in Dict_snv_germ_A.get(pat)] # zero!
 	
-print Dict_Bayes_germ
 
 Dict_Bayes_tumor={}
 for pat in splittedList[1]: #test patients based on a pool of SNVs
 	#for "tumor" samples
 	if Dict_snv_tumor_A.get(pat) is None: Dict_Bayes_tumor[pat]=None
 	else:
-		Dict_Bayes_tumor[pat]=[(0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0]) \
+		Dict_Bayes_tumor[pat]=[math.log10((0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0])) \
 for snv in Dict_snv_tumor_A.get(pat)] # zero!
 
-print Dict_Bayes_tumor
 
 del Dict_snv_tumor_A 
 del Dict_snv_germ_A
@@ -279,21 +278,54 @@ del Dict_freq_tumor_A
 del Dict_freq_germ_A
 
 
+
 #use the second half tor training, testdata is [0]
-#CountNonRedundantTrainingFreq(germFile+".ext.gz", tempDir+"/germ_freq.B", ".", splittedList[0]) 
-#CountNonRedundantTrainingFreq(tumorFile+".ext.gz", tempDir+"/tumor_freq.B", ".", splittedList[0]) 
-#writeTestPatList(splittedList[0], tempDir+"/testPartB.tab")
-#extractPatIDs(splittedList[0], germFile+".ext.gz", tempDir+"/", "germ.snvsb")
-#extractPatIDs(splittedList[0], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsb")
+
+Dict_freq_germ_B=CountNonRedundantTrainingFreq(germFile+".ext.gz", tempDir+"/germ_freq.B", ".", splittedList[0]) 
+Dict_freq_tumor_B=CountNonRedundantTrainingFreq(tumorFile+".ext.gz", tempDir+"/tumor_freq.B", ".", splittedList[0]) 
+writeTestPatList(splittedList[0], tempDir+"/testPartB.tab")
+Dict_snv_germ_B=extractPatIDs(splittedList[0], germFile+".ext.gz", tempDir+"/", "germ.snvsb")
+Dict_snv_tumor_B=extractPatIDs(splittedList[0], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsb")
+
+for pat in splittedList[0]: #test patients based on a pool of SNVs
+	#for "germ" samples
+	if Dict_snv_germ_B.get(pat) is None: Dict_Bayes_germ[pat]=None
+	else:
+		#print Dict_snv_germ_A.get(pat)
+		Dict_Bayes_germ[pat]=[math.log10((0.5+Dict_freq_tumor_B.get(snv)[0])/(0.5+Dict_freq_germ_B.get(snv)[0])) \
+for snv in Dict_snv_germ_B.get(pat)] # zero!
+	
+
+
+for pat in splittedList[0]: #test patients based on a pool of SNVs
+	#for "tumor" samples
+	if Dict_snv_tumor_B.get(pat) is None: Dict_Bayes_tumor[pat]=None
+	else:
+		Dict_Bayes_tumor[pat]=[math.log10((0.5+Dict_freq_tumor_B.get(snv)[0])/(0.5+Dict_freq_germ_B.get(snv)[0])) \
+for snv in Dict_snv_tumor_B.get(pat)] # zero!
+
+
+del Dict_snv_tumor_B 
+del Dict_snv_germ_B
+del Dict_freq_tumor_B
+del Dict_freq_germ_B
 
 
 
+for pat in Dict_Bayes_germ:
+	if Dict_Bayes_germ.get(pat) is None:
+		print pat+"_"+"0"+"\t"+"NA"+"\t"+"g"
+	else:
+		val=reduce(lambda x,y: x+y, Dict_Bayes_germ.get(pat))
+		print pat+"_"+str(len(Dict_Bayes_germ.get(pat)))+"\t"+str(val)+"\t"+"g"
 
 
 
-
-
-
-
+for pat in Dict_Bayes_tumor:
+	if Dict_Bayes_tumor.get(pat) is None:
+		print pat+"_"+"0"+"\t"+"NA"+"\t"+"t"
+	else:
+		val=reduce(lambda x,y: x+y, Dict_Bayes_tumor.get(pat))
+		print pat+"_"+str(len(Dict_Bayes_tumor.get(pat)))+"\t"+str(val)+"\t"+"t"
 
 
