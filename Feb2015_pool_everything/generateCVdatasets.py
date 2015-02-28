@@ -19,7 +19,7 @@ usage: python generateCVdatasets.py snvTest ./testdir 3909.panCancer.list_Feb19_
 
 '''
 
-if len(sys.argv)<5:
+if len(sys.argv)<6:
 	raise SystemExit("I need arguments!")
 
 
@@ -212,13 +212,32 @@ def writeTestPatList(testList, outTestPatFile):
 
 
 
+def pred(baydict, label, topR):
+	'''
+	print per patient bayesTeller score, recalibrated
+	'''
+
+	for pat in baydict:
+		if baydict.get(pat) is None:
+			print pat+"_"+"0"+"\t"+"NA"+"\t"+label
+		else:
+			logR=baydict.get(pat)
+			l=len(logR)
+			logR.sort(reverse=True)
+			keyR=logR[0:int(topR*l)] # take top 30% hits
+			val=reduce(lambda x,y: x+y, keyR)
+			val=float(val/l)
+			print pat+"_"+str(l)+"\t"+str(val)+"\t"+label
+
+
 try:
 	setSNV=sys.argv[1] #the list of selected SNVs
 	tempDir=sys.argv[2] #the tempDir to hold individual samples of a collection of SNVs
 	sampleList=sys.argv[3] #the total list of samples
 	germFile=sys.argv[4] # the aggregated germline file
 	tumorFile=sys.argv[5] # the aggregated tumor file
-	#print sys.argv
+	topR=float(sys.argv[6]) #only take top 0.3 (30%) for sum (snvlogR)
+	print sys.argv
 
 except:
 	pass
@@ -312,20 +331,12 @@ del Dict_freq_germ_B
 
 
 
-for pat in Dict_Bayes_germ:
-	if Dict_Bayes_germ.get(pat) is None:
-		print pat+"_"+"0"+"\t"+"NA"+"\t"+"g"
-	else:
-		val=reduce(lambda x,y: x+y, Dict_Bayes_germ.get(pat))
-		print pat+"_"+str(len(Dict_Bayes_germ.get(pat)))+"\t"+str(val)+"\t"+"g"
 
 
 
-for pat in Dict_Bayes_tumor:
-	if Dict_Bayes_tumor.get(pat) is None:
-		print pat+"_"+"0"+"\t"+"NA"+"\t"+"t"
-	else:
-		val=reduce(lambda x,y: x+y, Dict_Bayes_tumor.get(pat))
-		print pat+"_"+str(len(Dict_Bayes_tumor.get(pat)))+"\t"+str(val)+"\t"+"t"
+
+pred(Dict_Bayes_germ, "g", topR)
+pred(Dict_Bayes_tumor, "t", topR)
+
 
 
