@@ -212,10 +212,30 @@ def writeTestPatList(testList, outTestPatFile):
 
 
 
-def pred(baydict, label, topR):
+def bayesTeller(Dict_Bayes, testL, Dict_snv, Dict_freq_germ, Dict_freq_tumor):
+
+	'''
+	for a given test list of patients, each patient is represented by a set of SNVs, given model Dict_freq, match each patient with an list of freqs 
+	'''
+
+	for pat in testL: #test patients based on a pool of SNVs
+		#for "germ" samples
+		if Dict_snv.get(pat) is None: Dict_Bayes[pat]=None
+		else:
+		#print Dict_snv_germ_A.get(pat)
+			Dict_Bayes[pat]=[math.log10((0.5+Dict_freq_tumor.get(snv)[0])/(0.5+Dict_freq_germ.get(snv)[0])) \
+for snv in Dict_snv.get(pat)] # zero!
+	
+	return Dict_Bayes
+
+
+
+
+def pred(baydict, label, cutoff):
 	'''
 	print per patient bayesTeller score, recalibrated
 	'''
+	keyR=[]
 
 	for pat in baydict:
 		if baydict.get(pat) is None:
@@ -224,10 +244,24 @@ def pred(baydict, label, topR):
 			logR=baydict.get(pat)
 			l=len(logR)
 			logR.sort(reverse=True)
-			keyR=logR[0:int(topR*l)] # take top 30% hits
-			val=reduce(lambda x,y: x+y, keyR)
-			val=float(val/l)
-			print pat+"_"+str(l)+"\t"+str(val)+"\t"+label
+			for ratio in logR:
+				if ratio>=cutoff:
+					keyR.append(ratio)
+
+			#keyR=logR[0:int(topR*l)] # take top 30% hits
+			if len(keyR)==0: print pat+"_"+"0"+"\t"+"NA"+"\t"+label
+			else:
+			
+				val=reduce(lambda x,y: x+y, keyR)
+			#val=float(val/(l*topR))
+				print pat+"_"+str(l)+"\t"+str(val)+"\t"+label
+				keyR=[]
+
+
+
+def getWeights(lista, element):
+
+	return float(len(lista)-lista.index(element))/len(lista)
 
 
 try:
@@ -236,8 +270,9 @@ try:
 	sampleList=sys.argv[3] #the total list of samples
 	germFile=sys.argv[4] # the aggregated germline file
 	tumorFile=sys.argv[5] # the aggregated tumor file
-	topR=float(sys.argv[6]) #only take top 0.3 (30%) for sum (snvlogR)
-	print sys.argv
+	cutoff=float(sys.argv[6]) #only take top 0.3 (30%) for sum (snvlogR)
+	cutoff=math.log10(cutoff) # take log10, March 4, 2015
+#	print sys.argv
 
 except:
 	pass
@@ -248,6 +283,13 @@ try:
     	os.makedirs(tempDir)
 except OSError:
     	if not os.path.isdir(tempDir): raise
+
+#March 2, 2015
+#consider weights for SNVs, top ranked are of higher priorities
+
+snvpool=[snv.strip("\n") for snv in open(setSNV, "r")]
+
+
 
 
 
@@ -272,30 +314,13 @@ Dict_snv_germ_A=extractPatIDs(splittedList[1], germFile+".ext.gz", tempDir+"/", 
 Dict_snv_tumor_A=extractPatIDs(splittedList[1], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsa")
 #
 
+
+
 Dict_Bayes_germ={}#patient, lists of SNVs-> logRatio
-for pat in splittedList[1]: #test patients based on a pool of SNVs
-	#for "germ" samples
-	if Dict_snv_germ_A.get(pat) is None: Dict_Bayes_germ[pat]=None
-	else:
-		#print Dict_snv_germ_A.get(pat)
-		Dict_Bayes_germ[pat]=[math.log10((0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0])) \
-for snv in Dict_snv_germ_A.get(pat)] # zero!
-	
+Dict_Bayes_germ=bayesTeller(Dict_Bayes_germ, splittedList[1], Dict_snv_germ_A, Dict_freq_germ_A, Dict_freq_tumor_A)
 
 Dict_Bayes_tumor={}
-for pat in splittedList[1]: #test patients based on a pool of SNVs
-	#for "tumor" samples
-	if Dict_snv_tumor_A.get(pat) is None: Dict_Bayes_tumor[pat]=None
-	else:
-		Dict_Bayes_tumor[pat]=[math.log10((0.5+Dict_freq_tumor_A.get(snv)[0])/(0.5+Dict_freq_germ_A.get(snv)[0])) \
-for snv in Dict_snv_tumor_A.get(pat)] # zero!
-
-
-del Dict_snv_tumor_A 
-del Dict_snv_germ_A
-del Dict_freq_tumor_A
-del Dict_freq_germ_A
-
+Dict_Bayes_tumor=bayesTeller(Dict_Bayes_tumor, splittedList[1], Dict_snv_tumor_A, Dict_freq_germ_A, Dict_freq_tumor_A)
 
 
 #use the second half tor training, testdata is [0]
@@ -306,37 +331,15 @@ writeTestPatList(splittedList[0], tempDir+"/testPartB.tab")
 Dict_snv_germ_B=extractPatIDs(splittedList[0], germFile+".ext.gz", tempDir+"/", "germ.snvsb")
 Dict_snv_tumor_B=extractPatIDs(splittedList[0], tumorFile+".ext.gz", tempDir+"/", "tumor.snvsb")
 
-for pat in splittedList[0]: #test patients based on a pool of SNVs
-	#for "germ" samples
-	if Dict_snv_germ_B.get(pat) is None: Dict_Bayes_germ[pat]=None
-	else:
-		#print Dict_snv_germ_A.get(pat)
-		Dict_Bayes_germ[pat]=[math.log10((0.5+Dict_freq_tumor_B.get(snv)[0])/(0.5+Dict_freq_germ_B.get(snv)[0])) \
-for snv in Dict_snv_germ_B.get(pat)] # zero!
-	
 
+Dict_Bayes_germ=bayesTeller(Dict_Bayes_germ, splittedList[0], Dict_snv_germ_B, Dict_freq_germ_B, Dict_freq_tumor_B)
 
-for pat in splittedList[0]: #test patients based on a pool of SNVs
-	#for "tumor" samples
-	if Dict_snv_tumor_B.get(pat) is None: Dict_Bayes_tumor[pat]=None
-	else:
-		Dict_Bayes_tumor[pat]=[math.log10((0.5+Dict_freq_tumor_B.get(snv)[0])/(0.5+Dict_freq_germ_B.get(snv)[0])) \
-for snv in Dict_snv_tumor_B.get(pat)] # zero!
-
-
-del Dict_snv_tumor_B 
-del Dict_snv_germ_B
-del Dict_freq_tumor_B
-del Dict_freq_germ_B
+Dict_Bayes_tumor=bayesTeller(Dict_Bayes_tumor, splittedList[0], Dict_snv_tumor_B, Dict_freq_germ_B, Dict_freq_tumor_B)
 
 
 
-
-
-
-
-pred(Dict_Bayes_germ, "g", topR)
-pred(Dict_Bayes_tumor, "t", topR)
+pred(Dict_Bayes_germ, "g", cutoff)
+pred(Dict_Bayes_tumor, "t", cutoff)
 
 
 

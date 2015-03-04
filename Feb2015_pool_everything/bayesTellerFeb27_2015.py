@@ -19,7 +19,8 @@ try:
 	sampleFile=sys.argv[2] #unknow sample of SNVs, gzipped
 	germFreq=sys.argv[3] # freq in panCancer germ trained
 	tumorFreq=sys.argv[4] # freq in panCancer tumor trained
-	topR=float(sys.argv[5]) #take top 0.3 (30%) for sum of the snvlogRatio
+	cutoff=float(sys.argv[5]) #take top 0.3 (30%) for sum of the snvlogRatio
+	cutoff=math.log10(cutoff)
 	#print sys.argv
 
 except:
@@ -28,6 +29,15 @@ except:
 
 #read SNV pool
 snvList=[snv.strip("\n") for snv in open(setSNV, "r")]
+
+
+
+def getWeights(lista, element):
+
+	return float(len(lista)-lista.index(element))/len(lista)
+
+
+
 
 fh=gzip.open(sampleFile, "rb")
 hit=[]
@@ -43,7 +53,6 @@ for line in fh:
 			pass			
 			
 fh.close()
-del snvList
 
 
 #read freq in training as dicts
@@ -72,11 +81,21 @@ for snv in hit] # zero!
 if len(logR)==0:
 	print "0"+"\t"+"NA"
 else:
+	keyR=[]
 	l=len(logR)
 	logR.sort(reverse=True)
-	keyR=logR[0:int(topR*l)] # take top 30% hits
-	val=reduce(lambda x,y: x+y, keyR)
-	val=float(val/l)
-	print str(len(logR))+"\t"+str(val)
+	for ratio in logR:
+		if ratio>=cutoff:
+			keyR.append(ratio)
+
+	#keyR=logR[0:int(topR*l)] # take top 30% hits
+	if len(keyR)==0: print "0"+"\t"+"NA"
+	else:
+	
+		val=reduce(lambda x,y: x+y, keyR)
+	#val=float(val/(l*topR))
+		print str(l)+"\t"+str(val)
+		keyR=[]
+
 
 
