@@ -94,7 +94,7 @@ else:
 	
 		val=reduce(lambda x,y: x+y, keyR)
 	#val=float(val/(l*topR))
-		print str(l)+"\t"+str(val)
+		print str(l)+"\t"+str(val/l)
 		keyR=[]
 
 

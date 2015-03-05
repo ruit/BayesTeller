@@ -254,7 +254,7 @@ def pred(baydict, label, cutoff):
 			
 				val=reduce(lambda x,y: x+y, keyR)
 			#val=float(val/(l*topR))
-				print pat+"_"+str(l)+"\t"+str(val)+"\t"+label
+				print pat+"_"+str(l)+"\t"+str(val/l)+"\t"+label
 				keyR=[]
 
 
