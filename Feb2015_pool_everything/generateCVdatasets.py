@@ -62,14 +62,14 @@ def extractPatIDs(testList, aggreData, outfilePath, suffix):
 				patSNV_dict.setdefault(pat,[]).append(array[0])
 				#print pat, array[0]
 	
-#	print patSNV_dict
-	for pat in testList:
-		f_out=gzip.open(outfilePath+pat+"_"+suffix+".gz", "wb")
+#	print patSNV_dict # March 6, 2015, Do not print
+	#for pat in testList:
+	#	f_out=gzip.open(outfilePath+pat+"_"+suffix+".gz", "wb")
 		
-		if patSNV_dict.get(pat) is None: pass
-		else:	
-			f_out.write("\n".join(patSNV_dict.get(pat)))
-		f_out.close()
+	#	if patSNV_dict.get(pat) is None: pass
+	#	else:	
+	#		f_out.write("\n".join(patSNV_dict.get(pat)))
+	#	f_out.close()
 
 	return patSNV_dict
 	
@@ -290,13 +290,18 @@ except OSError:
 snvpool=[snv.strip("\n") for snv in open(setSNV, "r")]
 
 
-
-
-
 #step one, only consider selected SNVs, thereby reducing file sizes
 
-extractBySNVs(setSNV, tumorFile, ".ext")
-extractBySNVs(setSNV, germFile, ".ext")
+
+if os.path.isfile(tumorFile+".ext.gz"): pass
+else:
+	extractBySNVs(setSNV, tumorFile, ".ext")
+
+if os.path.isfile(germFile+".ext.gz"): pass
+else:
+	extractBySNVs(setSNV, germFile, ".ext")
+
+
 
 #step two, generate randomly splitted half-half patients list
 splittedList=GenerateTestList(sampleList)
@@ -342,4 +347,6 @@ pred(Dict_Bayes_germ, "g", cutoff)
 pred(Dict_Bayes_tumor, "t", cutoff)
 
 
+os.remove(germFile+".ext.gz")
+os.remove(tumorFile+".ext.gz")
 
