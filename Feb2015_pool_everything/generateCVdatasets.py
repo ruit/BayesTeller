@@ -4,7 +4,7 @@
 #Feb 23, 2015 Use one or two good days to write one major program, do not delay!!!!!!!!!
 #Feb 24, 2015, Feb26 Run over 3909 patients, 2000SNVs, 30min !!!!!
 #Tian R. <tianremi@gmail.com>
-
+#March 4, 2015
 
 import sys, os, gzip, re, random
 import math
@@ -239,7 +239,7 @@ def pred(baydict, label, cutoff):
 
 	for pat in baydict:
 		if baydict.get(pat) is None:
-			print pat+"_"+"0"+"\t"+"NA"+"\t"+label
+			print pat+"_"+"0"+"_0"+"\t"+"NA"+"\t"+label
 		else:
 			logR=baydict.get(pat)
 			l=len(logR)
@@ -249,12 +249,12 @@ def pred(baydict, label, cutoff):
 					keyR.append(ratio)
 
 			#keyR=logR[0:int(topR*l)] # take top 30% hits
-			if len(keyR)==0: print pat+"_"+"0"+"\t"+"NA"+"\t"+label
+			if len(keyR)==0: print pat+"_"+"0"+"_0"+"\t"+"NA"+"\t"+label
 			else:
 			
 				val=reduce(lambda x,y: x+y, keyR)
 			#val=float(val/(l*topR))
-				print pat+"_"+str(l)+"\t"+str(val/l)+"\t"+label
+				print pat+"_"+str(l)+"_"+str(len(keyR))+"\t"+str(val/l)+"\t"+label
 				keyR=[]
 
 

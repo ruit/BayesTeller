@@ -82,19 +82,21 @@ if len(logR)==0:
 	print "0"+"\t"+"NA"
 else:
 	keyR=[]
+	countedLoci=[]
 	l=len(logR)
-	logR.sort(reverse=True)
+	#logR.sort(reverse=True)
 	for ratio in logR:
 		if ratio>=cutoff:
 			keyR.append(ratio)
+			countedLoci.append(hit[logR.index(ratio)]) #March 6, 2015, keep record of counted top SNVs
 
 	#keyR=logR[0:int(topR*l)] # take top 30% hits
-	if len(keyR)==0: print "0"+"\t"+"NA"
+	if len(keyR)==0: print "0_0"+"\t"+"NA"
 	else:
 	
 		val=reduce(lambda x,y: x+y, keyR)
 	#val=float(val/(l*topR))
-		print str(l)+"\t"+str(val/l)
+		print str(l)+"_"+str(len(keyR))+":"+";".join(countedLoci)+"\t"+str(val/l)
 		keyR=[]
 
 
