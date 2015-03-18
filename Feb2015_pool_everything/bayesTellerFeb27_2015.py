@@ -2,6 +2,7 @@
 
 #Tian R. <tianremi@gmail.com>
 #Feb 27, 2015 
+#March 18, 2015
 
 import sys, gzip, re
 import math
@@ -73,7 +74,9 @@ logR=[]
 if len(hit)==0:
 	logR=[]
 else:
-	logR=[math.log10((0.5+Dict_freq_tumor_A.get(snv))/(0.5+Dict_freq_germ_A.get(snv))) \
+
+	#March 18, 2015, if  not hits, assign zero
+	logR=[math.log10((0.5+Dict_freq_tumor_A.get(snv, 0))/(0.5+Dict_freq_germ_A.get(snv, 0))) \
 for snv in hit] # zero!
 	
 
