@@ -2,7 +2,7 @@
 
 #Tian R. <tianremi@gmail.com>
 #Feb 27, 2015 
-#March 18b, 2015
+#March 18b,19 2015
 
 import sys, gzip, re
 import math
@@ -123,10 +123,10 @@ def pred(hit, all_logR, logR, cutoff, sampleFile, suffix):
 
 if len(logR)==0:
 	fh_out=open(sampleFile+".all", "w")
-	fh_out("0"+"\t"+"NA"+"\n")
+	fh_out.write("0"+"\t"+"NA"+"\n")
 	fh_out.close()
 else:
 
-	pred(hit, logR, logR, cutoff, sampleFile, ".all")
-	pred(hit, logR, logR_somaLike, cutoff, sampleFile, ".sml")
-	pred(hit, logR, logR_germLike, cutoff, sampleFile, ".gml")
+	pred(hit, logR, logR, cutoff, sampleFile, "_"+sys.argv[6]+".all")
+	pred(hit, logR, logR_somaLike, cutoff, sampleFile, "_"+sys.argv[6]+".sml")
+	pred(hit, logR, logR_germLike, cutoff, sampleFile, "_"+sys.argv[6]+".gml")
