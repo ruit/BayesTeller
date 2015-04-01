@@ -1,7 +1,7 @@
 #TianR.
 #Mar 30, 2015
 #Mar 31, 2015, Tue.
-
+#April 1, 2015, Wed.
 
 #install docker in MaxOS 10.6+
 ################################
@@ -31,11 +31,13 @@ source ~/.bashrc
 
 
 ###########################
-#Hello World
+#1 Hello World
 
+https://www.docker.com/whatisdocker/
 
+try it
 
-
+two videos
 
 
 
@@ -80,3 +82,12 @@ docker images
 docker run --name mongo_instance1 -d myyy/repo
 docker logs mongo_instance1
 
+
+
+#################################
+#4 To mount the directory in host to a Container
+docker run -v /Users/tianr/0projects/Learn/00Docker/testdir/:/tmp d0955f21bf24 ls /tmp
+
+docker run -i -t -v /Users/tianr/Desktop/CancerSeqMachine_docker_2015Mar24-May24/RawData/Exome_Trio_Corpas/:/tmp bb4ee6fb9845 bowtie -qS /opt/local/software/bowtie-1.1.1/indexes/e_coli /tmp/test.fq 
+
+docker run -i -t -v /Users/tianr/Desktop/CancerSeqMachine_docker_2015Mar24-May24/RawData/Exome_Trio_Corpas/:/tmp bb4ee6fb9845 bowtie -qS /tmp/e_coli.ebwt/e_coli /tmp/test.fq
