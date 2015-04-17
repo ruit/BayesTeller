@@ -295,14 +295,13 @@ snvpool=[snv.strip("\n") for snv in open(setSNV, "r")]
 #step one, only consider selected SNVs, thereby reducing file sizes
 
 
-if os.path.isfile(tumorFile+".ext.gz"): pass
-else:
-	extractBySNVs(setSNV, tumorFile, ".ext")
+#if os.path.isfile(tumorFile+".ext.gz"): pass
+#else:
+extractBySNVs(setSNV, tumorFile, ".ext")
 
-if os.path.isfile(germFile+".ext.gz"): pass
-else:
-	extractBySNVs(setSNV, germFile, ".ext")
-
+#if os.path.isfile(germFile+".ext.gz"): pass
+#else:
+extractBySNVs(setSNV, germFile, ".ext")
 
 
 #step two, generate randomly splitted half-half patients list
