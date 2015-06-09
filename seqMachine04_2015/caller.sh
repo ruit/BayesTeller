@@ -29,6 +29,12 @@ case $key in
     input2="$2"
     shift # past argument
     ;;
+
+    -a|--aligner)
+    aligner="$2"
+    shift # past argument
+    ;;
+
     -g|--refpath)
     refpath="$2"
     shift # past argument
@@ -72,6 +78,7 @@ fi
 
 echo $input1
 echo $input2
+echo $aligner
 echo $refpath
 echo $caller
 echo $fapath
@@ -142,6 +149,22 @@ pairedEndBWA () {
 }
 
 
+pairedENDbowtie () {
+    INPUT1=$1
+    INPUT2=$2    
+    pathbowtie2ind=$3
+
+    bowtie2 --end-to-end --very-fast --rg-id \
+"@RG\tID:1\tLB:project_name\tSM:1\tPL:ILLUMINA" \
+-x /data/$pathbowtie2ind -q -1 /data/$INPUT1 -2 /data/$INPUT2 | \
+samtools view - -Sb -o /data/output_dir/$INPUT1"_"$INPUT2".bam" #hg19Ref/hg19-bt2.fa.fai 
+#bowtie2_indexes/hg19
+
+}
+
+
+
+
 
 #mark duplicates---------------------------------------------------
 
@@ -165,22 +188,43 @@ hliCaller () {
 }
 
 
+#freeBayes by Erik Garrison
+
+freeBayesCaller () {
+    
+    nonredunBAM=$1
+    path2RefFA=$2
+    samtools index $nonredunBAM
+    freebayes -f $path2RefFA $nonredunBAM >$nonredunBAM".vcf"
+    
+}
+
 
 
 
 #Main----------------------------------------------------------------
 
-#single end:
-if [[ ${pair}=="p" ]] && [[ $refpath ]]; then
+#paired end:
+if [[ ${pair} == "p" ]] && [[ ${aligner} == "bwa" ]]; then
     pairedEndBWA $input1 $input2 $refpath
-    
-#paired end
-elif [[ ${pair}=="s" ]] && [[ $refpath ]]; then
-    singleEndBWA $input1 $refpath
+
+elif [[ ${pair} == "p" ]] &&  [[ ${aligner} == "bowtie2" ]]; then 
+    pairedENDbowtie $input1 $input2 $refpath
+   
+fi   
+#single end
+#elif [[ ${pair} =="s" ]] && [[ $refpath ]]; then
+#    singleEndBWA $input1 $refpath
     #echo "do nothing"
-fi
+#fi
 
 if [[ ${caller} == "hli" ]] && [[ ${pair}=="p" ]] && [[ ${fapath} ]]; then
     echo "Variant caller is set to be hli, samtools mpileup plus bcftools"
     hliCaller /data/output_dir/$INPUT1"_"$INPUT2".srt.cleaned.bam" /data/$fapath
+
+elif [[ ${caller} == "freebayes" ]] && [[ ${pair}=="p" ]] && [[ ${fapath} ]]; then
+    echo "Variant caller is set to be freebayes"
+    freeBayesCaller /data/output_dir/$INPUT1"_"$INPUT2".srt.cleaned.bam" /data/$fapath
+
+
 fi
