@@ -1,0 +1,7 @@
+Aug 24, 2015
+
+TF regulatory network is directed
+
+TF A (protein) to TB B (Gene)
+
+homework for any uncertainty!
